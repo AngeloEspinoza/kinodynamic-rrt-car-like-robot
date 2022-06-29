@@ -2,6 +2,7 @@ import pygame
 
 class Environment(object):
 	"""docstring for Environment"""
+	
 	def __init__(self, dimentions):
 		# Colors 
 		self.WHITE = (255, 255, 255)
@@ -16,6 +17,6 @@ class Environment(object):
 
 		# Window settings
 		self.FPS = 60
-		pygame.display.set_caption('Kynodinamic RRT - Car-like Robot')
+		pygame.display.set_caption('Kinodynamic RRT - Car-like Robot')
 		self.map = pygame.display.set_mode(size=(self.WIDTH,
 			self.HEIGHT))
