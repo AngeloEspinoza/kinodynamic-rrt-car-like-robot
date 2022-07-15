@@ -21,8 +21,8 @@ class Robot:
 		# Robot settings
 		self.x = start_pos[0] # X position
 		self.y = start_pos[1] # Y position
-		self.theta = 0 # Initial heading angle
-		self.phi = 0 # Initial steering angle
+		self.theta = 0 # Initial heading angle (rad)
+		self.phi = 0 # Initial steering angle (rad)
 		self.v = self.meters_to_pixels(meters=0.01) # m/s 
 		self.L = self.meters_to_pixels(meters=length) # m (meters)
 		self.max_speed = self.meters_to_pixels(meters=0.02) # m/s
@@ -38,12 +38,17 @@ class Robot:
 		self.last_time = pygame.time.get_ticks() # Last time recorded
 	
 	def meters_to_pixels(self, meters):
-		"""Converts from pixel to meters.
+		"""Converts from meters to pixels.
 		
 		Parameters
 		----------
 		meters: float
 			The meters to be converted into pixels.
+
+		Returns
+		-------
+		float
+			The meters in pixels.
 		"""
 		return meters*3779.52
 
@@ -57,7 +62,7 @@ class Robot:
 		"""
 		map.blit(source=self.rotated, dest=self.rect)
 
-	def move(self, event=None):
+	def move(self, event=None, u=None):
 		"""Moves the robot with key strokes.
 		
 		Takes the screen only if it is available.
@@ -78,20 +83,19 @@ class Robot:
 				elif event.key == pygame.K_DOWN:
 					self.phi -= math.radians(0.03)
 
-		# Bound the steering angle between -pi/2 and pi/2
-		if self.phi < -math.pi/2:
-			self.phi = -math.pi/2
-		elif self.phi > math.pi/2:
-			self.phi = math.pi/2
+		# Stablish the control input u to be the steering angle phi
+		self.u1 = u[0]
+		self.u2 = u[1]
+
+		print(f'u1: {self.u1}m/s')
+		print(f'u2: {math.radians(self.u2)}rad/s')
 
 		# Car-like kinematic robot model
-		self.x += self.v * math.cos(self.theta) * math.cos(self.phi) \
-			* self.dt
-		self.y -= self.v * math.sin(self.theta) * math.cos(self.phi) \
-			* self.dt 			
-		self.theta += self.v * (math.tan(self.phi) / self.L) * self.dt
+		self.x += self.u1 * math.cos(math.radians(self.theta)) * self.dt
+		self.y -= self.u1 * math.sin(math.radians(self.theta)) * self.dt 			
+		self.theta += self.u2 * self.dt
 		
 		# Create the translation and rotation animation 
 		self.rotated = pygame.transform.rotozoom(surface=self.img,
-			angle=math.degrees(self.theta), scale=1)
+			angle=self.theta, scale=1)
 		self.rect = self.rotated.get_rect(center=(self.x, self.y))
