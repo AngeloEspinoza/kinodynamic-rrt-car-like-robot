@@ -18,8 +18,8 @@ class Graph(object):
 	"""
 
 	def __init__(self, start, goal, map_dimensions):
-		self.start = start
-		self.goal = goal
+		self.x_init = start
+		self.x_goal = goal
 		self.desired_orientation = 0
 		self.WIDTH, self.HEIGHT = map_dimensions
 		self.EPSILON = 20.0
@@ -28,14 +28,19 @@ class Graph(object):
 		self.max_simulations = 2 # Max forward simulations loops
 		self.increment = self.max_simulation_time
 		self.robot_last_position = []
+		self.filtered_tree = []
 		self.robot_last_orientation = []
 		self.is_simulation_finished = False
 		self.is_terminated = False
+		self.collision_free = False # Flag for the collision
+
+		self.robot_last_position.append(start)
+		self.robot_last_orientation.append(0)
 
 		self.k = 0
-		self.last_position = self.start
+		self.last_position = self.x_init
 		self.last_orientation = 0
-		self.u1 = random.uniform(-20, 20)
+		self.u1 = random.uniform(0, 10)
 		self.u2 = random.uniform(-30, 30)
 		self.u = [self.u1, self.u2]
 
@@ -133,6 +138,8 @@ class Graph(object):
 			Nearest node to the random node generated.	
 		"""
 		distances = []
+		distances_ = []
+		filtered_distances = []
 
 		for state in tree:
 			distance = self.euclidean_distance(state, x_rand)
@@ -142,12 +149,27 @@ class Graph(object):
 		self.min_distance = np.argmin(distances)
 		x_near = tree[self.min_distance]
 
+		filtered_distances.append(distances[self.min_distance])
+		self.filtered_tree.append(x_near)
+		
+		print(f'Actual tree: {tree}')
+		print(f'filtered tree: {self.filtered_tree}')
+		print(f'FILTERED DISTANCES: {filtered_distances}')
+
+		for state in self.filtered_tree:
+			distance = self.euclidean_distance(state, x_rand)
+			distances_.append(distance)
+
+		self.min_distance_ = np.argmin(distances_)
+		print(f'distances_: {distances_}')
+		print(f'min_distance_: {self.min_distance_}')
+
 		return x_near
 
 	def is_goal_reached(self):
 		# Check if goal is reached
-		if abs(self.u_new[0] - self.goal[0]) < self.EPSILON and \
-			abs(self.u_new[1] - self.goal[1]) < self.EPSILON: 
+		if abs(self.u_new[0] - self.x_goal[0]) < self.EPSILON and \
+			abs(self.u_new[1] - self.x_goal[1]) < self.EPSILON: 
 
 			return True
 
@@ -175,7 +197,6 @@ class Graph(object):
 		"""
 		time = robot.last_time // 1000	
 		self.is_simulation_finished = True
-		collision_free = self.is_free(point=(robot.x, robot.y), obstacles=obstacles)
 
 		if time <= self.max_simulation_time and self.k < self.max_simulations:
 			# robot.draw(map=environment.map) # Draw robot at each forward in time simulation
@@ -183,7 +204,7 @@ class Graph(object):
 			environment.trail(position=(robot.x, robot.y)) # Draw the trail
 		else:
 			# Sample control input
-			self.u1 = random.uniform(-20, 20)
+			self.u1 = random.uniform(0, 10)
 			self.u2 = random.uniform(-30, 30)
 			self.u = [self.u1, self.u2]
 
@@ -206,8 +227,8 @@ class Graph(object):
 
 			# Simulation time restarted 
 			self.is_terminated = False
-
 			
+			collision_free = self.is_free(point=(robot.x, robot.y), obstacles=obstacles)
 			if collision_free:
 				# Store and last configuration of the robot
 				self.store_configuration(position=(robot.x, robot.y),
@@ -217,7 +238,7 @@ class Graph(object):
 			robot.x, robot.y = self.last_position
 			robot.theta = self.last_orientation
 
-	def new_state(self, x_rand, x_near, robot, event, environment,
+	def new_state(self, x_rand, robot, event, environment,
 			obstacles=None):
 		"""Advances a small step towards the random node.
 
@@ -263,21 +284,20 @@ class Graph(object):
 			if self.is_goal_reached():
 				pygame.draw.line(surface=environment.map,
 					color=self.RED, start_pos=self.u_new,
-					end_pos=self.goal)	
+					end_pos=self.x_goal)	
 			
 			# Set last robot configuration and compare which is the nearest
 			collision_free = self.is_free(point=self.u_new, obstacles=obstacles)			
 			
 			if collision_free:
+				self.collision_free = True
 				self.last_position = self.u_new
 				self.last_orientation = self.theta_new
 				environment.compare(position=self.last_position)
 
-			self.draw_new_node(map=environment.map)
-
 			return self.u_new, self.theta_new
 
-	def generate_parents(values, parent):
+	def generate_parents(self, values, parent):
 		"""Generates a list of parents and their children.
 		
 		Sets up a list of the parents and its corresponding
@@ -297,13 +317,15 @@ class Graph(object):
 		list
 			Ordered collection of the parents.
 		"""
-		parent_value = values[self.min_distance] # Value nearest node
+		print(f'values: {values}')
+		# print(f'minimm distance index: {self.min_distance}')
+		parent_value = values[self.min_distance_] # Value nearest node
 		parent_index = len(parent) # Used to be the index of the parent list
 		parent.insert(parent_index, parent_value)
 
-		if is_goal_reached:
-			# Insert in the very last index the last value recorded plus one
-			parent.insert(parent_index+1, values[-1]+1)
+		# if is_goal_reached:
+		# 	# Insert in the very last index the last value recorded plus one
+		# 	parent.insert(parent_index+1, values[-1]+1)
 
 		return parent
 
@@ -331,12 +353,12 @@ class Graph(object):
 	def draw_initial_node(self, map):
 		"""Draws the x_init node."""
 		pygame.draw.circle(surface=map, color=self.BLUE, 
-			center=self.start, radius=3)
+			center=self.x_init, radius=3)
 
 	def draw_goal_node(self, map):
 		"""Draws the x_goal node."""
 		pygame.draw.circle(surface=map, color=self.YELLOW, 
-			center=self.goal, radius=3)
+			center=self.x_goal, radius=3)
 
 	def draw_random_node(self, node, map):
 		"""Draws the x_rand node."""

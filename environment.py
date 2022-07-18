@@ -87,7 +87,7 @@ class Environment():
 		self.trail_set = []
 
 	def compare(self, position):
-		"""Compares the last position with the the set of all the
+		"""Compares the last position with the set of all the
 		trails.
 
 		Given a position, it is compared with the last stored
@@ -132,7 +132,7 @@ class Environment():
 
 	def make_obstacles_T(self, initial_point):
 		x, y = initial_point[0], initial_point[1]
-		width, height = 20, 150
+		width, height = 50, 150
 
 		side1 = pygame.Rect(x, y, height, width)
 		side2 = pygame.Rect((x+height//2) - width//2, y, width, height)
@@ -143,7 +143,7 @@ class Environment():
 
 	def make_obstacles_L(self, initial_point):
 		x, y = initial_point[0], initial_point[1]
-		width, height = 20, 150
+		width, height = 50, 150
 
 		side1 = pygame.Rect(x, y, width, height)
 		side2 = pygame.Rect(x, y+height-width, height, width)
@@ -154,7 +154,7 @@ class Environment():
 
 	def make_obstacles(self):
 		obstacle1 = self.make_obstacles_T(initial_point=(350, 200))
-		obstacle2 = self.make_obstacles_L(initial_point=(200, 20))
+		obstacle2 = self.make_obstacles_L(initial_point=(100, 20))
 
 		self.obstacles.append(obstacle1)
 		self.obstacles.append(obstacle2)
