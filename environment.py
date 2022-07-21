@@ -154,7 +154,7 @@ class Environment():
 
 	def make_obstacles(self):
 		obstacle1 = self.make_obstacles_T(initial_point=(350, 200))
-		obstacle2 = self.make_obstacles_L(initial_point=(100, 20))
+		obstacle2 = self.make_obstacles_L(initial_point=(150, 20))
 
 		self.obstacles.append(obstacle1)
 		self.obstacles.append(obstacle2)

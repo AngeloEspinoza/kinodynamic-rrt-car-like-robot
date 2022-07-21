@@ -28,11 +28,13 @@ class Graph(object):
 		self.max_simulations = 2 # Max forward simulations loops
 		self.increment = self.max_simulation_time
 		self.robot_last_position = []
-		self.filtered_tree = []
 		self.robot_last_orientation = []
-		self.is_simulation_finished = False
-		self.is_terminated = False
+		self.is_forward_simulation_finished = False
+		self.is_goal_found = False
+		self.is_forward_simulation_time_finished = False
 		self.collision_free = False # Flag for the collision
+		self.iteration = 0
+		self.deleter = 3
 
 		self.robot_last_position.append(start)
 		self.robot_last_orientation.append(0)
@@ -40,7 +42,7 @@ class Graph(object):
 		self.k = 0
 		self.last_position = self.x_init
 		self.last_orientation = 0
-		self.u1 = random.uniform(0, 10)
+		self.u1 = random.uniform(-10, 10)
 		self.u2 = random.uniform(-30, 30)
 		self.u = [self.u1, self.u2]
 
@@ -72,7 +74,6 @@ class Graph(object):
 		-------
 		bool
 		"""
-		# print(f'point: {point}')
 		for obstacle in obstacles:
 			if obstacle.collidepoint(point):
 				# tree.remove(point)
@@ -115,7 +116,6 @@ class Graph(object):
 		float
 			Euclidean distance metric.
 		"""
-		# return  math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 		alpha = min(abs(self.last_orientation - self.desired_orientation), 2*math.pi - abs(self.last_orientation - self.desired_orientation))
 		return  math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + alpha**2)
 
@@ -138,8 +138,14 @@ class Graph(object):
 			Nearest node to the random node generated.	
 		"""
 		distances = []
-		distances_ = []
-		filtered_distances = []
+
+		try:
+			# Start with the depuration of the repeated positions
+			if len(tree) > self.max_simulations+1:
+				tree.pop(self.deleter)
+				self.deleter += self.max_simulations
+		except Exception as e:
+			pass
 
 		for state in tree:
 			distance = self.euclidean_distance(state, x_rand)
@@ -149,31 +155,7 @@ class Graph(object):
 		self.min_distance = np.argmin(distances)
 		x_near = tree[self.min_distance]
 
-		filtered_distances.append(distances[self.min_distance])
-		self.filtered_tree.append(x_near)
-		
-		print(f'Actual tree: {tree}')
-		print(f'filtered tree: {self.filtered_tree}')
-		print(f'FILTERED DISTANCES: {filtered_distances}')
-
-		for state in self.filtered_tree:
-			distance = self.euclidean_distance(state, x_rand)
-			distances_.append(distance)
-
-		self.min_distance_ = np.argmin(distances_)
-		print(f'distances_: {distances_}')
-		print(f'min_distance_: {self.min_distance_}')
-
 		return x_near
-
-	def is_goal_reached(self):
-		# Check if goal is reached
-		if abs(self.u_new[0] - self.x_goal[0]) < self.EPSILON and \
-			abs(self.u_new[1] - self.x_goal[1]) < self.EPSILON: 
-
-			return True
-
-		return False
 
 	def simulate(self, robot, event, environment, obstacles):
 		"""Simulates forward in time the sampled control inputs.
@@ -196,7 +178,7 @@ class Graph(object):
 			Collection of positions that the robot has passed through.
 		"""
 		time = robot.last_time // 1000	
-		self.is_simulation_finished = True
+		self.is_forward_simulation_finished = True
 
 		if time <= self.max_simulation_time and self.k < self.max_simulations:
 			# robot.draw(map=environment.map) # Draw robot at each forward in time simulation
@@ -204,7 +186,7 @@ class Graph(object):
 			environment.trail(position=(robot.x, robot.y)) # Draw the trail
 		else:
 			# Sample control input
-			self.u1 = random.uniform(0, 10)
+			self.u1 = random.uniform(-10, 10)
 			self.u2 = random.uniform(-30, 30)
 			self.u = [self.u1, self.u2]
 
@@ -214,19 +196,19 @@ class Graph(object):
 			self.max_simulation_time = time + self.increment 
 
 			# Simulation time finished
-			self.is_terminated = True
+			self.is_forward_simulation_time_finished = True
 
 		if self.k > self.max_simulations:
 			self.k = 0 # Restart forward simulations 
-			self.is_simulation_finished = False
+			self.is_forward_simulation_finished = False
 
 			return self.robot_last_position 
-		elif self.is_terminated:
+		elif self.is_forward_simulation_time_finished:
 			# Store the last trails of the robot
 			environment.store_trails()
 
 			# Simulation time restarted 
-			self.is_terminated = False
+			self.is_forward_simulation_time_finished = False
 			
 			collision_free = self.is_free(point=(robot.x, robot.y), obstacles=obstacles)
 			if collision_free:
@@ -259,6 +241,8 @@ class Graph(object):
 		environment : environment object
 			Environment to draw the trails and the simulations forward
 			in time.
+		obstacles : list
+			List of obstacles of type Rect.
 
 		Returns
 		-------
@@ -273,8 +257,16 @@ class Graph(object):
 		# Simulation forward in time
 		simulation = self.simulate(robot=robot, event=event,
 			environment=environment, obstacles=obstacles)
+		
+		# Bias the tree every certain iterations
+		if self.iteration%7 == 0:
+			x_rand = self.bias()
 
 		if simulation is not None:
+			# Make a tree expansion
+			self.iteration += 1 
+			# print(f'simulaiton: {simulation}')
+
 			# New control input
 			self.u_new = self.nearest_neighbor(simulation, x_rand)
 
@@ -284,17 +276,19 @@ class Graph(object):
 			if self.is_goal_reached():
 				pygame.draw.line(surface=environment.map,
 					color=self.RED, start_pos=self.u_new,
-					end_pos=self.x_goal)	
+					end_pos=self.x_goal)
+				self.is_goal_found = True
 			
 			# Set last robot configuration and compare which is the nearest
 			collision_free = self.is_free(point=self.u_new, obstacles=obstacles)			
 			
+			self.draw_new_node(map=environment.map)
+
 			if collision_free:
 				self.collision_free = True
 				self.last_position = self.u_new
 				self.last_orientation = self.theta_new
 				environment.compare(position=self.last_position)
-
 			return self.u_new, self.theta_new
 
 	def generate_parents(self, values, parent):
@@ -317,15 +311,13 @@ class Graph(object):
 		list
 			Ordered collection of the parents.
 		"""
-		print(f'values: {values}')
-		# print(f'minimm distance index: {self.min_distance}')
-		parent_value = values[self.min_distance_] # Value nearest node
+		parent_value = values[self.min_distance] # Value nearest node
 		parent_index = len(parent) # Used to be the index of the parent list
 		parent.insert(parent_index, parent_value)
 
-		# if is_goal_reached:
-		# 	# Insert in the very last index the last value recorded plus one
-		# 	parent.insert(parent_index+1, values[-1]+1)
+		if self.is_goal_reached():
+			# Insert in the very last index the last value recorded plus one
+			parent.insert(parent_index+1, values[-1]+1)
 
 		return parent
 
@@ -349,6 +341,18 @@ class Graph(object):
 		self.robot_last_position.append(position)
 		self.robot_last_orientation.append(orientation)
 
+	def is_goal_reached(self):
+		"""Checks whether the tree has reached the goal."""
+		if abs(self.u_new[0] - self.x_goal[0]) < self.EPSILON and \
+			abs(self.u_new[1] - self.x_goal[1]) < self.EPSILON: 
+
+			return True
+
+		return False
+
+	def bias(self):
+		"""Biasing by changing the random node."""		
+		return self.x_goal
 
 	def draw_initial_node(self, map):
 		"""Draws the x_init node."""
@@ -368,4 +372,4 @@ class Graph(object):
 	def draw_new_node(self, map):
 		"""Draws the x_new node."""
 		pygame.draw.circle(surface=map, color=self.BROWN, 
-			center=self.u_new, radius=3)
+			center=self.u_new, radius=2.5)
