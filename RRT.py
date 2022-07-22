@@ -3,7 +3,7 @@ import random
 import math
 import numpy as np
 
-class Graph(object):
+class Graph():
 	"""
 	A class for the Rapidly-Exploring Random Tree (RRT).
 	

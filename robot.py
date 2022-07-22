@@ -1,7 +1,7 @@
 import pygame 
 import math
 
-class Robot:
+class Robot():
 	"""
 	A class to represent a car-like robot dimensions, start position, 
 	heading angle, and velocity.

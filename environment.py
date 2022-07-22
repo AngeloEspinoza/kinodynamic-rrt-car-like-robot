@@ -2,7 +2,7 @@ import pygame
 
 class Environment():
 	"""
-	A class of the map where the car-like robot will be moving.
+	A class of the map where the car-like robot will be moving around.
 
 	Attributes
 	----------
@@ -30,12 +30,9 @@ class Environment():
 		self.map = pygame.display.set_mode(size=(self.WIDTH,
 			self.HEIGHT))
 
-		# Trail of the robot position
+		# Trail of the robot position, sets of trails and obstacles 
 		self.trail_set = []
-
-		# Sets of trails  
 		self.trail_sets = []
-
 		self.obstacles = []
 
 
@@ -109,7 +106,7 @@ class Environment():
 				self.draw_trajectory_trail(self.trail_sets[i])
 
 	def draw_trajectory_trail(self, trail):
-		"""Draw the trajectory given a trail.
+		"""Draws the trajectory given a trail.
 
 		Given a trail, it draws the best trail in the RRT tree from
 		the candidate nodes to the random generated node.
@@ -131,6 +128,20 @@ class Environment():
 				start_pos=trail_set_start, end_pos=trail_set_end)
 
 	def make_obstacles_T(self, initial_point):
+		"""
+		Given a initial point, it makes a obstacle with shape of T.
+		
+		Parameters
+		----------
+		initial_point : tuple
+			X and Y coordinates, starting from the top-left most part where
+			the obstacle will be placed.
+		
+		Returns
+		-------
+		list
+			A collection of sides composing the T obstacle.			
+		"""
 		x, y = initial_point[0], initial_point[1]
 		width, height = 50, 150
 
@@ -142,6 +153,20 @@ class Environment():
 		return obstacle
 
 	def make_obstacles_L(self, initial_point):
+		"""
+		Given a initial point, it makes a obstacle with shape of L.
+		
+		Parameters
+		----------
+		initial_point : tuple
+			X and Y coordinates, starting from the top-left most part where
+			the obstacle will be placed.
+		
+		Returns
+		-------
+		list
+			A collection of sides composing the L obstacle.
+		"""	
 		x, y = initial_point[0], initial_point[1]
 		width, height = 50, 150
 
@@ -153,6 +178,7 @@ class Environment():
 		return obstacle
 
 	def make_obstacles(self):
+		"""Generate the obstacles to be placed on the final map."""
 		obstacle1 = self.make_obstacles_T(initial_point=(350, 200))
 		obstacle2 = self.make_obstacles_L(initial_point=(150, 20))
 
@@ -162,6 +188,7 @@ class Environment():
 		return self.obstacles
 
 	def draw_obstacles(self):
+		"""Draw each side of the obstacles."""
 		obstacles = []
 		self.make_obstacles()
 

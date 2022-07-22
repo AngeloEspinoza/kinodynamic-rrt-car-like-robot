@@ -1,6 +1,4 @@
 import pygame
-import random
-import math
 import environment
 import robot
 import RRT
@@ -13,9 +11,9 @@ pygame.init()
 
 # Initial and final position of the robots
 x_init = 50, 50
-x_goal = 70, 100
+x_goal = 540, 380
 
-# Map dimentions
+# Map dimensions
 map_dimensions = 640, 480
 
 # Instantiating the environment and robot
@@ -62,13 +60,12 @@ def main():
 
 			if graph.collision_free:
 				# Append in function of the simulations done
-				for i in range(graph.max_simulations):
+				for _ in range(graph.max_simulations):
 					values.append(node_value)
 				parent = graph.generate_parents(values, parent)
 				node_value += 1
 				graph.collision_free = False
-		if graph.is_goal_found:
-			print(f'parent from outside {parent}')
+				
 		iteration += 1
 		pygame.display.update()
 
