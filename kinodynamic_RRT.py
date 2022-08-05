@@ -36,7 +36,7 @@ def main():
 	obstacles = environment.draw_obstacles()
 	node_value = 0
 	iteration = 0
-
+	print(obstacles)
 	while run:
 		# Make sure the loop runs at 60 FPS
 		clock.tick(environment.FPS) # CHECK IF TOO SLOW SIMULATION
@@ -53,7 +53,7 @@ def main():
 		if not graph.is_goal_found:
 			if not graph.is_forward_simulation_finished:
 				x_rand = graph.generate_random_node()
-				graph.draw_random_node(node=x_rand, map=environment.map)			
+				# graph.draw_random_node(node=x_rand, map=environment.map)			
 
 			x_new = graph.new_state(x_rand, robot, event,
 				environment, obstacles)	

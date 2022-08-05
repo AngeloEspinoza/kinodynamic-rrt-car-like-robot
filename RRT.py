@@ -54,6 +54,8 @@ class Graph():
 		self.BLUE = (0, 0, 255)
 		self.BROWN = (189, 154, 122)
 		self.YELLOW = (255, 255, 0)
+		self.FUCSIA = (255, 0, 255)
+
 
 	def is_free(self, point, obstacles, tree=None):
 		"""Checks whether a node is colliding with an obstacle or not.
@@ -179,9 +181,10 @@ class Graph():
 		"""
 		time = robot.last_time // 1000	
 		self.is_forward_simulation_finished = True
+		collision_free = self.is_free(point=(robot.x, robot.y), obstacles=obstacles)
 
-		if time <= self.max_simulation_time and self.k < self.max_simulations:
-			# robot.draw(map=environment.map) # Draw robot at each forward in time simulation
+		if time <= self.max_simulation_time and self.k < self.max_simulations and collision_free:
+			robot.draw(map=environment.map) # Draw robot at each forward in time simulation
 			robot.move(event=event, u=self.u) # Move the robot 
 			environment.trail(position=(robot.x, robot.y)) # Draw the trail
 		else:
@@ -210,12 +213,12 @@ class Graph():
 			# Simulation time restarted 
 			self.is_forward_simulation_time_finished = False
 			
-			collision_free = self.is_free(point=(robot.x, robot.y), obstacles=obstacles)
+			
 			if collision_free:
 				# Store and last configuration of the robot
 				self.store_configuration(position=(robot.x, robot.y),
 					orientation=robot.theta)
-			
+
 			# Reconfigure the robot position and orientation
 			robot.x, robot.y = self.last_position
 			robot.theta = self.last_orientation
@@ -261,8 +264,8 @@ class Graph():
 		# Bias the tree every certain iterations
 		if self.iteration%7 == 0:
 			x_rand = self.bias()
-
 		if simulation is not None:
+			print(self.iteration)
 			# Make a tree expansion
 			self.iteration += 1 
 			# print(f'simulaiton: {simulation}')
@@ -282,7 +285,7 @@ class Graph():
 			# Set last robot configuration and compare which is the nearest
 			collision_free = self.is_free(point=self.u_new, obstacles=obstacles)			
 			
-			self.draw_new_node(map=environment.map)
+			# self.draw_new_node(map=environment.map)
 
 			if collision_free:
 				self.collision_free = True
@@ -361,7 +364,7 @@ class Graph():
 
 	def draw_goal_node(self, map):
 		"""Draws the x_goal node."""
-		pygame.draw.circle(surface=map, color=self.YELLOW, 
+		pygame.draw.circle(surface=map, color=self.RED, 
 			center=self.x_goal, radius=3)
 
 	def draw_random_node(self, node, map):

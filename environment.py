@@ -29,6 +29,7 @@ class Environment():
 		pygame.display.set_caption('Kinodynamic RRT - Car-like Robot')
 		self.map = pygame.display.set_mode(size=(self.WIDTH,
 			self.HEIGHT))
+		self.map.fill(self.WHITE)
 
 		# Trail of the robot position, sets of trails and obstacles 
 		self.trail_set = []
@@ -55,7 +56,7 @@ class Environment():
 		for i in range(len(self.trail_set)-1):
 			trail_set_start = self.trail_set[i][0], self.trail_set[i][1]
 			trail_set_end = self.trail_set[i+1][0], self.trail_set[i+1][1]
-			pygame.draw.line(surface=self.map, color=self.YELLOW,
+			pygame.draw.line(surface=self.map, color=self.BROWN,
 				start_pos=trail_set_start, end_pos=trail_set_end)
 
 		if self.trail_set.__sizeof__() > 30000:
@@ -181,9 +182,14 @@ class Environment():
 		"""Generate the obstacles to be placed on the final map."""
 		obstacle1 = self.make_obstacles_T(initial_point=(350, 200))
 		obstacle2 = self.make_obstacles_L(initial_point=(150, 20))
+		obstacle3 = self.make_obstacles_T(initial_point=(350, 200))
+		obstacle4 = self.make_obstacles_L(initial_point=(150, 20))
 
 		self.obstacles.append(obstacle1)
 		self.obstacles.append(obstacle2)
+
+		self.obstacles.append(obstacle3)
+		self.obstacles.append(obstacle4)
 
 		return self.obstacles
 
@@ -191,11 +197,25 @@ class Environment():
 		"""Draw each side of the obstacles."""
 		obstacles = []
 		self.make_obstacles()
+		self.obstacles[0][0].height = self.obstacles[0][0].height+50
+		self.obstacles[0][0].width =  self.obstacles[0][0].width+50
 
-		for obstacle in self.obstacles:
+		self.obstacles[0][1].height = self.obstacles[0][1].height+50
+		self.obstacles[0][1].width =  self.obstacles[0][1].width+50
+
+		self.obstacles[1][0].height = self.obstacles[1][0].height+50
+		self.obstacles[1][0].width =  self.obstacles[1][0].width+50
+
+		self.obstacles[1][1].height = self.obstacles[1][1].height+50
+		self.obstacles[1][1].width =  self.obstacles[1][1].width+50
+
+		for obstacle in self.obstacles[2:4]:
 			for side in obstacle:
 				pygame.draw.rect(surface=self.map, color=self.GRAY,
 					rect=side)
+
+		for obstacle in self.obstacles[:2]:
+			for side in obstacle:
 				obstacles.append(side)
 
 		return obstacles		
