@@ -36,7 +36,6 @@ class Environment():
 		self.trail_sets = []
 		self.obstacles = []
 
-
 	def trail(self, position):
 		"""Draw the robot trail.
 		
@@ -59,8 +58,8 @@ class Environment():
 			pygame.draw.line(surface=self.map, color=self.BROWN,
 				start_pos=trail_set_start, end_pos=trail_set_end)
 
-		if self.trail_set.__sizeof__() > 30000:
-			self.trail_set.pop(0)
+		# if self.trail_set.__sizeof__() > 30000:
+		# 	self.trail_set.pop(0)
 
 		self.trail_set.append(position)
 
@@ -104,9 +103,9 @@ class Environment():
 		"""
 		for i in range(len(self.trail_sets)):
 			if self.trail_sets[i][-1] == position:
-				self.draw_trajectory_trail(self.trail_sets[i])
+				self.draw_trajectory_trail()
 
-	def draw_trajectory_trail(self, trail):
+	def draw_trajectory_trail(self):
 		"""Draws the trajectory given a trail.
 
 		Given a trail, it draws the best trail in the RRT tree from
@@ -114,19 +113,18 @@ class Environment():
 
 		Parameters
 		----------
-		trail : list
-			A collection of positions forward in time simulated by 
-			the robot.
-
+		None
+		
 		Returns
 		-------
 		None
 		"""
-		for i in range(len(trail)-1):
-			trail_set_start = trail[i][0], trail[i][1]
-			trail_set_end = trail[i+1][0], trail[i+1][1]
-			pygame.draw.line(surface=self.map, color=self.RED,
-				start_pos=trail_set_start, end_pos=trail_set_end)
+		for trail in self.trail_sets:
+			for i in range(len(trail)-1):
+				trail_set_start = trail[i][0], trail[i][1]
+				trail_set_end = trail[i+1][0], trail[i+1][1]
+				pygame.draw.line(surface=self.map, color=self.RED,
+					start_pos=trail_set_start, end_pos=trail_set_end)
 
 	def make_obstacles_T(self, initial_point):
 		"""

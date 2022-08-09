@@ -2,16 +2,17 @@ import pygame
 import environment
 import robot
 import RRT
+import math
 
 # Constants
-ROBOT_IMG_PATH = r'robot.png'
+ROBOT_IMG_PATH = r'robot0.png'
 
 # Initialization 
 pygame.init()
 
 # Initial and final position of the robots
 x_init = 50, 50
-x_goal = 540, 380
+x_goal = 540, 380, 0
 
 # Map dimensions
 map_dimensions = 640, 480
@@ -33,11 +34,12 @@ def main():
 	tree.append(x_init) # Append initial node
 	parent.append(0)
 	values.append(0)
-	obstacles = environment.draw_obstacles()
 	node_value = 0
 	iteration = 0
-	print(obstacles)
+
 	while run:
+		# obstacles = environment.draw_obstacles()
+		obstacles = []
 		# Make sure the loop runs at 60 FPS
 		clock.tick(environment.FPS) # CHECK IF TOO SLOW SIMULATION
 		for event in pygame.event.get():
@@ -49,11 +51,11 @@ def main():
 		robot.last_time = pygame.time.get_ticks()
 		graph.draw_initial_node(map=environment.map)
 		graph.draw_goal_node(map=environment.map)
+		environment.draw_trajectory_trail()
 
 		if not graph.is_goal_found:
 			if not graph.is_forward_simulation_finished:
-				x_rand = graph.generate_random_node()
-				# graph.draw_random_node(node=x_rand, map=environment.map)			
+				x_rand = graph.generate_random_node()	
 
 			x_new = graph.new_state(x_rand, robot, event,
 				environment, obstacles)	
@@ -65,9 +67,14 @@ def main():
 				parent = graph.generate_parents(values, parent)
 				node_value += 1
 				graph.collision_free = False
-				
+
+		graph.draw_random_node(map=environment.map)
+		graph.draw_random_robot_configuration(robot_img=ROBOT_IMG_PATH, environment=environment)
+		
+
 		iteration += 1
 		pygame.display.update()
+		environment.map.fill(environment.WHITE)
 
 if __name__ == '__main__':
 	main()

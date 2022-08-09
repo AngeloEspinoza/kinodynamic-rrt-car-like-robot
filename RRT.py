@@ -24,7 +24,7 @@ class Graph():
 		self.WIDTH, self.HEIGHT = map_dimensions
 		self.EPSILON = 20.0
 
-		self.max_simulation_time = 3.0 # Max forward simulation time
+		self.max_simulation_time = 5.0 # Max forward simulation time
 		self.max_simulations = 2 # Max forward simulations loops
 		self.increment = self.max_simulation_time
 		self.robot_last_position = []
@@ -42,7 +42,7 @@ class Graph():
 		self.k = 0
 		self.last_position = self.x_init
 		self.last_orientation = 0
-		self.u1 = random.uniform(-10, 10)
+		self.u1 = random.uniform(0, 10)
 		self.u2 = random.uniform(-30, 30)
 		self.u = [self.u1, self.u2]
 
@@ -98,10 +98,14 @@ class Graph():
 		tuple
 			Coordinates of the random node. 
 		"""
-		x, y = random.uniform(0, self.WIDTH),\
-		random.uniform(0, self.HEIGHT)
+		# Sampling a robot configuration (x, y, theta) 
+		self.x_rand = random.uniform(0, self.WIDTH), random.uniform(0, self.HEIGHT), \
+			math.radians(random.uniform(-30, 30))
 
-		return x, y
+		if self.iteration&7 == 0:
+			self.x_rand = self.x_goal
+
+		return self.x_rand
 
 	def euclidean_distance(self, p1, p2):
 		"""Euclidean distance between two points.
@@ -118,7 +122,10 @@ class Graph():
 		float
 			Euclidean distance metric.
 		"""
-		alpha = min(abs(self.last_orientation - self.desired_orientation), 2*math.pi - abs(self.last_orientation - self.desired_orientation))
+		theta = self.x_rand[2]
+		alpha = min(abs(self.last_orientation - theta), 2*math.pi - \
+			abs(self.last_orientation - theta))
+
 		return  math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + alpha**2)
 
 	def nearest_neighbor(self, tree, x_rand):
@@ -145,6 +152,7 @@ class Graph():
 			# Start with the depuration of the repeated positions
 			if len(tree) > self.max_simulations+1:
 				tree.pop(self.deleter)
+				self.robot_last_orientation.pop(self.deleter)
 				self.deleter += self.max_simulations
 		except Exception as e:
 			pass
@@ -182,14 +190,13 @@ class Graph():
 		time = robot.last_time // 1000	
 		self.is_forward_simulation_finished = True
 		collision_free = self.is_free(point=(robot.x, robot.y), obstacles=obstacles)
-
-		if time <= self.max_simulation_time and self.k < self.max_simulations and collision_free:
+		if time <= self.max_simulation_time and self.k < self.max_simulations:
 			robot.draw(map=environment.map) # Draw robot at each forward in time simulation
 			robot.move(event=event, u=self.u) # Move the robot 
 			environment.trail(position=(robot.x, robot.y)) # Draw the trail
 		else:
 			# Sample control input
-			self.u1 = random.uniform(-10, 10)
+			self.u1 = random.uniform(0, 10)
 			self.u2 = random.uniform(-30, 30)
 			self.u = [self.u1, self.u2]
 
@@ -214,10 +221,10 @@ class Graph():
 			self.is_forward_simulation_time_finished = False
 			
 			
-			if collision_free:
-				# Store and last configuration of the robot
-				self.store_configuration(position=(robot.x, robot.y),
-					orientation=robot.theta)
+			# if collision_free:
+			# Store and last configuration of the robot
+			self.store_configuration(position=(robot.x, robot.y),
+				orientation=robot.theta)
 
 			# Reconfigure the robot position and orientation
 			robot.x, robot.y = self.last_position
@@ -264,11 +271,10 @@ class Graph():
 		# Bias the tree every certain iterations
 		if self.iteration%7 == 0:
 			x_rand = self.bias()
+
 		if simulation is not None:
-			print(self.iteration)
 			# Make a tree expansion
 			self.iteration += 1 
-			# print(f'simulaiton: {simulation}')
 
 			# New control input
 			self.u_new = self.nearest_neighbor(simulation, x_rand)
@@ -292,6 +298,7 @@ class Graph():
 				self.last_position = self.u_new
 				self.last_orientation = self.theta_new
 				environment.compare(position=self.last_position)
+
 			return self.u_new, self.theta_new
 
 	def generate_parents(self, values, parent):
@@ -354,7 +361,7 @@ class Graph():
 		return False
 
 	def bias(self):
-		"""Biasing by changing the random node."""		
+		"""Biasing by changing the random node."""
 		return self.x_goal
 
 	def draw_initial_node(self, map):
@@ -365,14 +372,23 @@ class Graph():
 	def draw_goal_node(self, map):
 		"""Draws the x_goal node."""
 		pygame.draw.circle(surface=map, color=self.RED, 
-			center=self.x_goal, radius=3)
+			center=self.x_goal[:2], radius=3)
 
-	def draw_random_node(self, node, map):
+	def draw_random_node(self, map):
 		"""Draws the x_rand node."""
 		pygame.draw.circle(surface=map, color=self.GREEN, 
-			center=node, radius=3)
+			center=self.x_rand[:2], radius=3)
 
 	def draw_new_node(self, map):
 		"""Draws the x_new node."""
 		pygame.draw.circle(surface=map, color=self.BROWN, 
 			center=self.u_new, radius=2.5)
+
+	def draw_random_robot_configuration(self, robot_img, environment):
+		self.img = pygame.image.load(robot_img)
+
+		# Create the translation and rotation animation 
+		rotated = pygame.transform.rotozoom(surface=self.img,
+			angle=math.degrees(self.x_rand[2]), scale=1)
+		rect = rotated.get_rect(center=self.x_rand[:2])			
+		environment.map.blit(source=rotated, dest=rect)

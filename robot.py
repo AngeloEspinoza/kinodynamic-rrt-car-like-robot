@@ -34,7 +34,7 @@ class Robot():
 		self.rect = self.rotated.get_rect(center=(self.x, self.y))
 		
 		# Time variant 
-		self.dt = 0 # Delta time
+		self.dt = 0.01 # Delta time
 		self.last_time = pygame.time.get_ticks() # Last time recorded
 	
 	def meters_to_pixels(self, meters):
@@ -86,9 +86,6 @@ class Robot():
 		# Stablish the control input u to be the steering angle phi
 		self.u1 = u[0]
 		self.u2 = u[1]
-
-		# print(f'u1: {self.u1}m/s')
-		# print(f'u2: {math.radians(self.u2)}rad/s')
 
 		# Car-like kinematic robot model
 		self.x += self.u1 * math.cos(math.radians(self.theta)) * self.dt
