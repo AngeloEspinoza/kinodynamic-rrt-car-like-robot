@@ -40,9 +40,9 @@ class Graph():
 		self.robot_last_orientation.append(0)
 
 		self.k = 0
-		self.last_position = self.x_init
-		self.last_orientation = 0
-		self.u1 = random.uniform(0, 10)
+		self.last_position = self.x_init[:2]
+		self.last_orientation = self.x_init[2]
+		self.u1 = random.uniform(-10, 10)
 		self.u2 = random.uniform(-30, 30)
 		self.u = [self.u1, self.u2]
 
@@ -99,10 +99,10 @@ class Graph():
 			Coordinates of the random node. 
 		"""
 		# Sampling a robot configuration (x, y, theta) 
-		self.x_rand = random.uniform(0, self.WIDTH), random.uniform(0, self.HEIGHT), \
-			math.radians(random.uniform(-30, 30))
+		self.x_rand = int(random.uniform(0, self.WIDTH)), int(random.uniform(0, self.HEIGHT)), \
+			int(math.radians(random.uniform(-30, 30)))
 
-		if self.iteration&7 == 0:
+		if self.iteration%7 == 0:
 			self.x_rand = self.x_goal
 
 		return self.x_rand
@@ -196,7 +196,7 @@ class Graph():
 			environment.trail(position=(robot.x, robot.y)) # Draw the trail
 		else:
 			# Sample control input
-			self.u1 = random.uniform(0, 10)
+			self.u1 = random.uniform(-10, 10)
 			self.u2 = random.uniform(-30, 30)
 			self.u = [self.u1, self.u2]
 
@@ -223,11 +223,11 @@ class Graph():
 			
 			# if collision_free:
 			# Store and last configuration of the robot
-			self.store_configuration(position=(robot.x, robot.y),
-				orientation=robot.theta)
+			self.store_configuration(position=(int(robot.x), int(robot.y)),
+				orientation=int(robot.theta))
 
 			# Reconfigure the robot position and orientation
-			robot.x, robot.y = self.last_position
+			robot.x, robot.y = self.last_position[:2]
 			robot.theta = self.last_orientation
 
 	def new_state(self, x_rand, robot, event, environment,
@@ -269,8 +269,8 @@ class Graph():
 			environment=environment, obstacles=obstacles)
 		
 		# Bias the tree every certain iterations
-		if self.iteration%7 == 0:
-			x_rand = self.bias()
+		# if self.iteration%7 == 0:
+		# 	x_rand = self.bias()
 
 		if simulation is not None:
 			# Make a tree expansion
@@ -285,7 +285,7 @@ class Graph():
 			if self.is_goal_reached():
 				pygame.draw.line(surface=environment.map,
 					color=self.RED, start_pos=self.u_new,
-					end_pos=self.x_goal)
+					end_pos=self.x_goal[:2])
 				self.is_goal_found = True
 			
 			# Set last robot configuration and compare which is the nearest
@@ -353,9 +353,15 @@ class Graph():
 
 	def is_goal_reached(self):
 		"""Checks whether the tree has reached the goal."""
-		if abs(self.u_new[0] - self.x_goal[0]) < self.EPSILON and \
-			abs(self.u_new[1] - self.x_goal[1]) < self.EPSILON: 
+		POSITION_BOUNDARY = 5
+		ORIENTATION_BOUNDARY = 1
 
+		goal_position = self.x_goal[:2]
+		goal_orientation = math.radians(self.x_goal[2])
+		if self.last_position >= (goal_position[0]-POSITION_BOUNDARY, goal_position[1]-POSITION_BOUNDARY) and \
+		 	self.last_position <= (goal_position[0]+POSITION_BOUNDARY, goal_position[1]+POSITION_BOUNDARY) and \
+		 	self.last_orientation >= goal_orientation-ORIENTATION_BOUNDARY and \
+		 	self.last_orientation <= goal_orientation+ORIENTATION_BOUNDARY:
 			return True
 
 		return False
@@ -367,7 +373,7 @@ class Graph():
 	def draw_initial_node(self, map):
 		"""Draws the x_init node."""
 		pygame.draw.circle(surface=map, color=self.BLUE, 
-			center=self.x_init, radius=3)
+			center=self.x_init[:2], radius=3)
 
 	def draw_goal_node(self, map):
 		"""Draws the x_goal node."""
@@ -383,6 +389,24 @@ class Graph():
 		"""Draws the x_new node."""
 		pygame.draw.circle(surface=map, color=self.BROWN, 
 			center=self.u_new, radius=2.5)
+
+	def draw_initial_robot_configuration(self, robot_img, environment):
+		self.img = pygame.image.load(robot_img)
+
+		# Create the translation and rotation animation 
+		rotated = pygame.transform.rotozoom(surface=self.img,
+			angle=math.degrees(self.x_init[2]), scale=1)
+		rect = rotated.get_rect(center=self.x_init[:2])			
+		environment.map.blit(source=rotated, dest=rect)
+
+	def draw_goal_robot_configuration(self, robot_img, environment):
+		self.img = pygame.image.load(robot_img)
+
+		# Create the translation and rotation animation 
+		rotated = pygame.transform.rotozoom(surface=self.img,
+			angle=math.degrees(self.x_goal[2]), scale=1)
+		rect = rotated.get_rect(center=self.x_goal[:2])			
+		environment.map.blit(source=rotated, dest=rect)
 
 	def draw_random_robot_configuration(self, robot_img, environment):
 		self.img = pygame.image.load(robot_img)

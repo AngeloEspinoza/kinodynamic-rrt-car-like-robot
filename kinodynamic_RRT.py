@@ -10,9 +10,9 @@ ROBOT_IMG_PATH = r'robot0.png'
 # Initialization 
 pygame.init()
 
-# Initial and final position of the robots
-x_init = 50, 50
-x_goal = 540, 380, 0
+# Initial and final configuration of the robot
+x_init = 50, 50, 0.17 # px, px, rads
+x_goal = 100, 100, -0.17 # px, px, rads
 
 # Map dimensions
 map_dimensions = 640, 480
@@ -31,7 +31,7 @@ def main():
 	tree = []
 	parent = []
 	values = []
-	tree.append(x_init) # Append initial node
+	tree.append(x_init[:2]) # Append initial node
 	parent.append(0)
 	values.append(0)
 	node_value = 0
@@ -51,12 +51,16 @@ def main():
 		robot.last_time = pygame.time.get_ticks()
 		graph.draw_initial_node(map=environment.map)
 		graph.draw_goal_node(map=environment.map)
+		graph.draw_initial_robot_configuration(robot_img=ROBOT_IMG_PATH, environment=environment)
+		graph.draw_goal_robot_configuration(robot_img=ROBOT_IMG_PATH, environment=environment)
 		environment.draw_trajectory_trail()
 
 		if not graph.is_goal_found:
 			if not graph.is_forward_simulation_finished:
 				x_rand = graph.generate_random_node()	
-
+				print(f'goal position: {graph.x_goal[:2]}, goal orientation: {graph.x_goal[2]}')
+				print(f'robot last position: {graph.last_position[:2]} pxs, robot last orientation: {math.radians(graph.last_orientation)} rads')
+				
 			x_new = graph.new_state(x_rand, robot, event,
 				environment, obstacles)	
 
@@ -68,9 +72,8 @@ def main():
 				node_value += 1
 				graph.collision_free = False
 
-		graph.draw_random_node(map=environment.map)
 		graph.draw_random_robot_configuration(robot_img=ROBOT_IMG_PATH, environment=environment)
-		
+		graph.draw_random_node(map=environment.map)
 
 		iteration += 1
 		pygame.display.update()
