@@ -21,7 +21,6 @@ map_dimensions = 640, 480
 environment = environment.Environment(dimensions=map_dimensions)
 robot = robot.Robot(start_pos=x_init, robot_img=ROBOT_IMG_PATH,
 	length=0.01)
-
 graph = RRT.Graph(start=x_init, goal=x_goal, 
 		map_dimensions=map_dimensions)
 
@@ -58,8 +57,6 @@ def main():
 		if not graph.is_goal_found:
 			if not graph.is_forward_simulation_finished:
 				x_rand = graph.generate_random_node()	
-				print(f'goal position: {graph.x_goal[:2]}, goal orientation: {graph.x_goal[2]}')
-				print(f'robot last position: {graph.last_position[:2]} pxs, robot last orientation: {math.radians(graph.last_orientation)} rads')
 				
 			x_new = graph.new_state(x_rand, robot, event,
 				environment, obstacles)	

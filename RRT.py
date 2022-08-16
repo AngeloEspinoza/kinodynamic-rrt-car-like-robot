@@ -10,9 +10,9 @@ class Graph():
 	Attributes
 	----------
 	start : tuple
-		Initial position of the tree in X and Y respectively.
+		Initial configuration of the tree in X, Y and theta respectively.
 	goal : tuple
-		End position of the tree in X and Y respectively.
+		End configuration of the tree in X, Y and theta respectively.
 	map_dimensions : tuple
 		Map width and height in pixels.
 	"""
@@ -353,15 +353,21 @@ class Graph():
 
 	def is_goal_reached(self):
 		"""Checks whether the tree has reached the goal."""
-		POSITION_BOUNDARY = 5
+		POSITION_BOUNDARY = 10
 		ORIENTATION_BOUNDARY = 1
 
 		goal_position = self.x_goal[:2]
 		goal_orientation = math.radians(self.x_goal[2])
-		if self.last_position >= (goal_position[0]-POSITION_BOUNDARY, goal_position[1]-POSITION_BOUNDARY) and \
-		 	self.last_position <= (goal_position[0]+POSITION_BOUNDARY, goal_position[1]+POSITION_BOUNDARY) and \
-		 	self.last_orientation >= goal_orientation-ORIENTATION_BOUNDARY and \
-		 	self.last_orientation <= goal_orientation+ORIENTATION_BOUNDARY:
+		last_position_x, last_position_y = self.last_position[0], self.last_position[1]
+		goal_position_x, goal_position_y = goal_position[0], goal_position[1]
+
+		# Allowed region for the robot to reach goal
+		upper_condition_x = last_position_x <= goal_position_x+POSITION_BOUNDARY
+		lower_condition_x = last_position_x >= goal_position_x-POSITION_BOUNDARY
+		upper_condition_y = last_position_y <= goal_position_y+POSITION_BOUNDARY
+		lower_condition_y = last_position_y >= goal_position_y-POSITION_BOUNDARY		
+
+		if upper_condition_x and lower_condition_x and upper_condition_y and lower_condition_y:
 			return True
 
 		return False
