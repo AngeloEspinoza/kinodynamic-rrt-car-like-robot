@@ -36,8 +36,8 @@ class Graph():
 		self.iteration = 0
 		self.deleter = 3
 
-		self.robot_last_position.append(start)
-		self.robot_last_orientation.append(0)
+		self.robot_last_position.append(self.x_init[:2])
+		self.robot_last_orientation.append(self.x_init[2])
 
 		self.k = 0
 		self.last_position = self.x_init[:2]
@@ -100,7 +100,7 @@ class Graph():
 		"""
 		# Sampling a robot configuration (x, y, theta) 
 		self.x_rand = int(random.uniform(0, self.WIDTH)), int(random.uniform(0, self.HEIGHT)), \
-			int(math.radians(random.uniform(-30, 30)))
+			math.radians(random.uniform(0, 360))
 
 		if self.iteration%7 == 0:
 			self.x_rand = self.x_goal
@@ -283,9 +283,9 @@ class Graph():
 			self.theta_new = self.robot_last_orientation[self.min_distance]
 			
 			if self.is_goal_reached():
-				pygame.draw.line(surface=environment.map,
-					color=self.RED, start_pos=self.u_new,
+				pygame.draw.line(surface=environment.map, color=self.RED, start_pos=self.u_new,
 					end_pos=self.x_goal[:2])
+				self.goal_configuration = self.number_of_nodes
 				self.is_goal_found = True
 			
 			# Set last robot configuration and compare which is the nearest
@@ -351,13 +351,60 @@ class Graph():
 		self.robot_last_position.append(position)
 		self.robot_last_orientation.append(orientation)
 
+	def path_to_goal(self):
+		"""Collects the parents of each node.
+		
+		Given the x_goal node, it searches the next parent
+		continously until it reaches the x_init node.
+
+		Parameters
+		----------
+		None
+
+		Returns
+		-------
+		None
+		"""
+		if self.is_goal_reached:
+			self.path = []
+			self.path.append(self.goal_configuration)
+			new_configuration = self.parent[self.goal_configuration] # Parent of the x_goal node
+
+			while new_configuration != 0:
+				# Append the parent of the parent and update the configuration
+				self.path.append(new_configuration)
+				new_configuration = self.parent[new_configuration]
+
+			# Append the parent 0 (correspondant to the x_init node)
+			self.path.append(0)
+
+	def get_path_coordinates(self):
+		"""Collects the correspondant coordinates.
+
+		Given a list of the nodes it searches the correspondant
+		coordinates in the tree.
+
+		Parameters
+		----------
+		None
+
+		Returns
+		-------
+		None
+		"""
+		self.path_coordinates = []
+
+		for node in self.path:
+			x, y = self.tree[node]
+			self.path_coordinates.append((x, y))
+
+		return self.path_coordinates[:-1]
+
 	def is_goal_reached(self):
 		"""Checks whether the tree has reached the goal."""
-		POSITION_BOUNDARY = 10
-		ORIENTATION_BOUNDARY = 1
+		POSITION_BOUNDARY = 30
 
 		goal_position = self.x_goal[:2]
-		goal_orientation = math.radians(self.x_goal[2])
 		last_position_x, last_position_y = self.last_position[0], self.last_position[1]
 		goal_position_x, goal_position_y = goal_position[0], goal_position[1]
 
@@ -422,3 +469,8 @@ class Graph():
 			angle=math.degrees(self.x_rand[2]), scale=1)
 		rect = rotated.get_rect(center=self.x_rand[:2])			
 		environment.map.blit(source=rotated, dest=rect)
+
+	def draw_path_to_goal(self, map_):
+		"""Draws the path from the x_goal node to the x_init node."""
+		for i in range(len(self.path_coordinates)-1):
+			pygame.draw.circle(surface=map_, color=self.BLACK, center=self.path_coordinates[i], radius=4)

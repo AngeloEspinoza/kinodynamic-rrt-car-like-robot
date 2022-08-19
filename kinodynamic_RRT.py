@@ -61,6 +61,9 @@ def main():
 			x_new = graph.new_state(x_rand, robot, event,
 				environment, obstacles)	
 
+			if x_new is not None:
+				tree.append(x_new[0])
+
 			if graph.collision_free:
 				# Append in function of the simulations done
 				for _ in range(graph.max_simulations):
@@ -68,6 +71,16 @@ def main():
 				parent = graph.generate_parents(values, parent)
 				node_value += 1
 				graph.collision_free = False
+				graph.number_of_nodes = len(tree)
+
+			if graph.is_goal_found:
+				graph.parent = parent
+				graph.tree = tree
+				graph.path_to_goal()
+				graph.get_path_coordinates()
+			
+		if graph.is_goal_found:
+			graph.draw_path_to_goal(map_=environment.map)
 
 		graph.draw_random_robot_configuration(robot_img=ROBOT_IMG_PATH, environment=environment)
 		graph.draw_random_node(map=environment.map)
