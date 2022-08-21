@@ -12,10 +12,10 @@ pygame.init()
 
 # Initial and final configuration of the robot
 x_init = 50, 50, 0.17 # px, px, rads
-x_goal = 100, 100, -0.17 # px, px, rads
+x_goal = 200, 200, -0.17 # px, px, rads
 
-# Map dimensions
 map_dimensions = 640, 480
+# Map dimensions
 
 # Instantiating the environment and robot
 environment = environment.Environment(dimensions=map_dimensions)
@@ -28,9 +28,11 @@ def main():
 	run = True
 	clock = pygame.time.Clock()	
 	tree = []
+	orientation_tree = []
 	parent = []
 	values = []
 	tree.append(x_init[:2]) # Append initial node
+	orientation_tree.append(x_init[2]) # Append initial node
 	parent.append(0)
 	values.append(0)
 	node_value = 0
@@ -63,6 +65,7 @@ def main():
 
 			if x_new is not None:
 				tree.append(x_new[0])
+				orientation_tree.append(x_new[1])
 
 			if graph.collision_free:
 				# Append in function of the simulations done
@@ -76,11 +79,13 @@ def main():
 			if graph.is_goal_found:
 				graph.parent = parent
 				graph.tree = tree
+				graph.orientation_tree = orientation_tree
 				graph.path_to_goal()
 				graph.get_path_coordinates()
 			
 		if graph.is_goal_found:
 			graph.draw_path_to_goal(map_=environment.map)
+			graph.draw_interpolation(robot_img=ROBOT_IMG_PATH, environment=environment)
 
 		graph.draw_random_robot_configuration(robot_img=ROBOT_IMG_PATH, environment=environment)
 		graph.draw_random_node(map=environment.map)

@@ -34,9 +34,12 @@ class Robot():
 		self.rect = self.rotated.get_rect(center=(self.x, self.y))
 		
 		# Time variant 
-		self.dt = 0.01 # Delta time
+		self.dt = 1 # Delta time
 		self.last_time = pygame.time.get_ticks() # Last time recorded
-	
+		self.x_position = []
+		self.y_position = []
+		self.theta_orientation = []
+
 	def meters_to_pixels(self, meters):
 		"""Converts from meters to pixels.
 		
@@ -96,3 +99,7 @@ class Robot():
 		self.rotated = pygame.transform.rotozoom(surface=self.img,
 			angle=self.theta, scale=1)
 		self.rect = self.rotated.get_rect(center=(self.x, self.y))
+
+		self.x_position.append(self.x)
+		self.y_position.append(self.y)
+		self.theta_orientation.append(self.theta)
