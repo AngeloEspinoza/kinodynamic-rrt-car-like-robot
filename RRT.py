@@ -10,9 +10,9 @@ class Graph():
 	Attributes
 	----------
 	start : tuple
-		Initial configuration of the tree in X, Y and theta respectively.
+		Initial configuration of the tree in x, y and theta respectively.
 	goal : tuple
-		End configuration of the tree in X, Y and theta respectively.
+		End configuration of the tree in x, y and theta respectively.
 	map_dimensions : tuple
 		Map width and height in pixels.
 	"""
@@ -20,33 +20,26 @@ class Graph():
 	def __init__(self, start, goal, map_dimensions):
 		self.x_init = start
 		self.x_goal = goal
-		self.desired_orientation = 0
 		self.WIDTH, self.HEIGHT = map_dimensions
-		self.EPSILON = 20.0
 
-		self.max_simulation_time = 3.0 # Max forward simulation time
-		self.max_simulations = 2 # Max forward simulations loops
-		self.increment = self.max_simulation_time
+		self.max_simulation_time = 4 # Max forward simulation time
+		self.max_simulations = 1 # Max forward simulations loops
 		self.robot_last_position = []
 		self.robot_last_orientation = []
 		self.controls = []
 		self.is_forward_simulation_finished = False
 		self.is_goal_found = False
 		self.is_forward_simulation_time_finished = False
-		self.collision_free = False # Flag for the collision
 		self.iteration = 0
-		self.deleter = 3
 
 		self.robot_last_position.append(self.x_init[:2])
 		self.robot_last_orientation.append(self.x_init[2])
 
-		self.k = 0
 		self.last_position = self.x_init[:2]
 		self.last_orientation = self.x_init[2]
-		self.u1 = random.uniform(-10, 10)
-		self.u2 = random.uniform(-30, 30)
+		self.u1 = random.uniform(-0.4, 0.4)
+		self.u2 = random.uniform(-0.5, 0.5)
 		self.u = [self.u1, self.u2]
-
 
 		self.x_positions = []
 		self.y_positions = []
@@ -59,12 +52,14 @@ class Graph():
 		self.x_interpolation = []
 		self.y_interpolation = []
 		self.theta_interpolation = []
-		self.configurations_deleted = False
+
+		self.interpolation_factor = 10
 
 		self.x_interpolation.append(self.x_init[0])
 		self.y_interpolation.append(self.x_init[1])
 		self.theta_interpolation.append(self.x_init[2])
 
+		self.u_news = []
 
 		# Colors 
 		self.WHITE = (255, 255, 255)
@@ -76,37 +71,37 @@ class Graph():
 		self.YELLOW = (255, 255, 0)
 		self.FUCSIA = (255, 0, 255)
 
-	def is_free(self, point, obstacles, tree=None):
-		"""Checks whether a node is colliding with an obstacle or not.
+	def is_free(self, configuration, obstacles):
+		"""Checks if a configuration is colliding with an obstacle.
 
 		When dealing with obstacles it is necessary to check 
 		for the collision with them from the generated node.
 
 		Parameters
 		----------
-		point : tuple
-			Point to be checked.
+		configuration : pygame.Rect
+			Configuration to be checked.
 		obstacles : pygame.Rect
 			Rectangle obstacle.
-		tree : list
-			Tree containing all the coordinate nodes.
 
 		Returns
 		-------
 		bool
 		"""
 		for obstacle in obstacles:
-			if obstacle.collidepoint(point):
-				# tree.remove(point)
+			if obstacle.colliderect(configuration):
 				return False
 
 		return True
 
 	def generate_random_node(self):
-		"""Generates a random node on the screen.
+		"""Generates a random configuration.
 
-		The x and y coordinate is generated given an uniform
-		distribution of the size of the screen width and height.
+		The position (x, y) of the robot is generated given
+		an uniform distribution of the size of the screen
+		width and height, while the orientation is generated from
+		0 to 360 degrees. 
+
 
 		Parameters
 		----------
@@ -121,28 +116,31 @@ class Graph():
 		self.x_rand = int(random.uniform(0, self.WIDTH)), int(random.uniform(0, self.HEIGHT)), \
 			math.radians(random.uniform(0, 360))
 
-		if self.iteration%7 == 0:
+		if self.iteration%3 == 0:
 			self.x_rand = self.x_goal
 
 		return self.x_rand
 
-	def euclidean_distance(self, p1, p2):
-		"""Euclidean distance between two points.
+	def metric(self, p1, p2):
+		"""Metric defined for the configuration space (C-space) of a car-like robot.
+
+		The C-space of a car-like robot can be represented as C = R^2 x S^1. 
+		Therefore, a valid metric can be defined for such C-space.
 
 		Parameters
 		----------
 		p1 : int
-			Start point.
+			Start configuration.
 		p2 : int 
-			End point.
+			End configuration.
 
 		Returns
 		-------
 		float
-			Euclidean distance metric.
+			R^2 x S^1 metric.
 		"""
 		theta = self.x_rand[2]
-		alpha = min(abs(self.last_orientation - theta), 2*math.pi - \
+		alpha = min(abs(self.last_orientation - theta), 2*math.pi - 
 			abs(self.last_orientation - theta))
 
 		return  math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2 + alpha**2)
@@ -150,15 +148,15 @@ class Graph():
 	def nearest_neighbor(self, tree, x_rand):
 		"""Returns the index of the nearest neighbor.
 		
-		The nearest neighbor from all the nodes in the tree
-		to the randomly generated node.
+		The nearest neighbor from all the configurations in the tree
+		to the randomly generated configuration.
 
 		Parameters
 		----------
 		tree : list
-			Tree containing all the coordinate nodes.
+			Tree containing all the robot configurations.
 		x_rand : tuple 
-			Coordinate of the random node generated.
+			Configuration of the random node generated.
 
 		Returns
 		-------
@@ -167,17 +165,8 @@ class Graph():
 		"""
 		distances = []
 
-		try:
-			# Start with the depuration of the repeated positions
-			if len(tree) > self.max_simulations+1:
-				tree.pop(self.deleter)
-				self.robot_last_orientation.pop(self.deleter)
-				self.deleter += self.max_simulations
-		except Exception as e:
-			pass
-
 		for state in tree:
-			distance = self.euclidean_distance(state, x_rand)
+			distance = self.metric(state, x_rand)
 			distances.append(distance)
 
 		# Index of the minimum distance to the generated random node
@@ -206,66 +195,66 @@ class Graph():
 		list
 			Collection of positions that the robot has passed through.
 		"""
-		time = robot.last_time // 1000	
-
+		time = robot.dt
 
 		self.is_forward_simulation_finished = True
-		collision_free = self.is_free(point=(robot.x, robot.y), obstacles=obstacles)
 
-		if time <= self.max_simulation_time and self.k < self.max_simulations:
+		if time <= self.max_simulation_time:
 			robot.draw(map=environment.map) # Draw robot at each forward in time simulation
-			robot.move(event=event, u=self.u) # Move the robot 
+			robot.move(event=event, u=self .u) # Move the robot 
 			environment.trail(position=(robot.x, robot.y)) # Draw the trail
 			self.x_positions.append(robot.x)
 			self.y_positions.append(robot.y)
 			self.theta_orientations.append(robot.theta)
 		else:
+			self.is_forward_simulation_finished = False
+			self.max_simulation_time = 4				
+
+
 			# Sample control input
-			self.u1 = random.uniform(-10, 10)
-			self.u2 = random.uniform(-30, 30)
+			self.u1 = random.uniform(-0.4, 0.4)
+			self.u2 = random.uniform(-0.5, 0.5)
 			self.u = [self.u1, self.u2]
 
-			# One forward in time simulation done
-			self.k += 1 
-			# New simulation time for the next loop			
-			self.max_simulation_time = time + self.increment 
-
-			# Simulation time finished
-			self.is_forward_simulation_time_finished = True
-			
-		if self.k > self.max_simulations:
-			self.k = 0 # Restart forward simulations 
-			self.is_forward_simulation_finished = False 
-
-			return self.robot_last_position 
-		elif self.is_forward_simulation_time_finished:
 			# Store the last trails of the robot
 			environment.store_trails()
 
 			# Simulation time restarted 
-			self.is_forward_simulation_time_finished = False
-			
-			
-			# if collision_free:
-			# Store and last configuration of the robot
-			self.store_configuration(position=(robot.x, robot.y),
-				orientation=robot.theta)
-			self.store_controls(controls=self.u)
+			collision_free = self.is_free(configuration=robot.rect, obstacles=obstacles)
 
-			self.x_position.append(self.x_positions)
-			self.y_position.append(self.y_positions)
-			self.theta_orientation.append(self.theta_orientations)
+			if collision_free:
+				# Store and last configuration of the robot
+				self.store_configuration(position=(robot.x, robot.y), orientation=robot.theta)
+				self.store_controls(controls=self.u)
 
-			self.x_positions = []
-			self.y_positions = []
-			self.theta_orientations = []
+				self.x_position.append(self.x_positions)
+				self.y_position.append(self.y_positions)
+				self.theta_orientation.append(self.theta_orientations)
 
-			# Reconfigure the robot position and orientation
-			robot.x, robot.y = self.last_position[:2]
-			robot.theta = self.last_orientation
+				self.x_positions = []
+				self.y_positions = []
+				self.theta_orientations = []
 
-	def new_state(self, x_rand, robot, event, environment,
-			obstacles=None):
+				robot.dt = 0 
+				time = robot.dt
+
+				return self.robot_last_position
+
+			else:
+				self.x_positions = []
+				self.y_positions = []
+				self.theta_orientations = []
+
+				robot.dt = 0 
+				time = robot.dt
+
+				# Reconfigure the robot position and orientation
+				robot.x, robot.y = self.last_position[:2]
+				robot.theta = self.last_orientation
+
+				return None
+
+	def new_state(self, x_rand, robot, event, environment, obstacles=None):
 		"""Advances a small step towards the random node.
 
 		Given the forward simulations in time, it selects
@@ -276,15 +265,12 @@ class Graph():
 		----------
 		x_rand : tuple
 			Coordinate of the random node generated.
-		x_near : tuple 
-			Coordinate of the nearest neighbor node. 
 		robot : robot object
 			The robot where the control inputs will be simualated.
 		event : Event
 			All events happenning in the screen.
 		environment : environment object
-			Environment to draw the trails and the simulations forward
-			in time.
+			Environment to draw the trails and the simulations forward in time.
 		obstacles : list
 			List of obstacles of type Rect.
 
@@ -298,40 +284,32 @@ class Graph():
 		if obstacles is None:
 			obstacles = []
 
+		self.obstacles = obstacles
+
 		# Simulation forward in time
-		simulation = self.simulate(robot=robot, event=event,
-			environment=environment, obstacles=obstacles)
-		
-		# Bias the tree every certain iterations
-		# if self.iteration%7 == 0:
-		# 	x_rand = self.bias()
+		simulation = self.simulate(robot=robot, event=event, environment=environment,
+			obstacles=obstacles)
 
-		if simulation is not None:
-			# Make a tree expansion
-			self.iteration += 1 
-
-			# New control input
-			self.u_new = self.nearest_neighbor(simulation, x_rand)
+		if simulation is not None:			
+			self.iteration += 1 # Make a tree expansion			
+			self.u_new = self.nearest_neighbor(simulation, x_rand) # New control input
 
 			# Robot heading angle with the minimum distance to x_rand  
 			self.theta_new = self.robot_last_orientation[self.min_distance]
 			
+			# Append new controls to a list 
+			self.u_news.append(self.u_new)
+
 			if self.is_goal_reached():
-				pygame.draw.line(surface=environment.map, color=self.RED, start_pos=self.u_new,
-					end_pos=self.x_goal[:2])
-				self.goal_configuration = self.number_of_nodes
+				self.goal_configuration = self.number_of_nodes-1 
 				self.is_goal_found = True
 			
-			# Set last robot configuration and compare which is the nearest
-			collision_free = self.is_free(point=self.u_new, obstacles=obstacles)			
-			
-			# self.draw_new_node(map=environment.map)
+			self.last_position = self.u_new
+			self.last_orientation = self.theta_new
+			# environment.compare(position=self.last_position)
 
-			if collision_free:
-				self.collision_free = True
-				self.last_position = self.u_new
-				self.last_orientation = self.theta_new
-				environment.compare(position=self.last_position)
+			robot.x, robot.y = self.last_position[:2]
+			robot.theta = self.last_orientation
 
 			return self.u_new, self.theta_new
 
@@ -385,8 +363,6 @@ class Graph():
 		self.robot_last_position.append(position)
 		self.robot_last_orientation.append(orientation)
 
-	def store_controls(self, controls):
-		self.controls.append(controls)
 
 	def path_to_goal(self):
 		"""Collects the parents of each node.
@@ -442,12 +418,11 @@ class Graph():
 					self.y_interpolation.append(self.y_position[i])
 					self.theta_interpolation.append(self.theta_orientation[i])
 
-
-		return self.path_coordinates[:-1]
+		return self.path_coordinates
 
 	def is_goal_reached(self):
 		"""Checks whether the tree has reached the goal."""
-		POSITION_BOUNDARY = 30
+		POSITION_BOUNDARY = 20
 
 		goal_position = self.x_goal[:2]
 		last_position_x, last_position_y = self.last_position[0], self.last_position[1]
@@ -464,9 +439,9 @@ class Graph():
 
 		return False
 
-	def bias(self):
-		"""Biasing by changing the random node."""
-		return self.x_goal
+	def store_controls(self, controls):
+		"""Simply stores the controls."""
+		self.controls.append(controls)
 
 	def draw_initial_node(self, map):
 		"""Draws the x_init node."""
@@ -485,35 +460,36 @@ class Graph():
 
 	def draw_new_node(self, map):
 		"""Draws the x_new node."""
-		pygame.draw.circle(surface=map, color=self.BROWN, 
-			center=self.u_new, radius=2.5)
+		for i in range(len(self.u_news)):
+			pygame.draw.circle(surface=map, color=self.BROWN, 
+				center=self.u_news[i], radius=3)
 
 	def draw_initial_robot_configuration(self, robot_img, environment):
-		self.img = pygame.image.load(robot_img)
+		"""Draws the x_init configuration."""
+		position = self.x_init[:2]
+		orientation = math.degrees(self.x_init[2])
 
-		# Create the translation and rotation animation 
-		rotated = pygame.transform.rotozoom(surface=self.img,
-			angle=math.degrees(self.x_init[2]), scale=1)
-		rect = rotated.get_rect(center=self.x_init[:2])			
-		environment.map.blit(source=rotated, dest=rect)
+		self.draw_robot_configuration(image=robot_img, position=position,	orientation=orientation,
+			environment=environment)
 
 	def draw_goal_robot_configuration(self, robot_img, environment):
-		self.img = pygame.image.load(robot_img)
+		"""Draws the x_goal configuration."""
+		position = self.x_goal[:2]
+		orientation = math.degrees(self.x_goal[2])
 
-		# Create the translation and rotation animation 
-		rotated = pygame.transform.rotozoom(surface=self.img,
-			angle=math.degrees(self.x_goal[2]), scale=1)
-		rect = rotated.get_rect(center=self.x_goal[:2])			
-		environment.map.blit(source=rotated, dest=rect)
+		self.draw_robot_configuration(image=robot_img, position=position,	orientation=orientation,
+			environment=environment)
+
 
 	def draw_random_robot_configuration(self, robot_img, environment):
-		self.img = pygame.image.load(robot_img)
+		"""Draws the x_rand configuration."""
+		position = self.x_rand[:2]
+		orientation = math.degrees(self.x_rand[2])
 
-		# Create the translation and rotation animation 
-		rotated = pygame.transform.rotozoom(surface=self.img,
-			angle=math.degrees(self.x_rand[2]), scale=1)
-		rect = rotated.get_rect(center=self.x_rand[:2])			
-		environment.map.blit(source=rotated, dest=rect)
+		rect = self.draw_robot_configuration(image=robot_img, position=position,	orientation=orientation,
+			environment=environment)
+
+		return rect
 
 	def draw_path_to_goal(self, map_):
 		"""Draws the path from the x_goal node to the x_init node."""
@@ -521,21 +497,42 @@ class Graph():
 			pygame.draw.circle(surface=map_, color=self.BLACK, center=self.path_coordinates[i], radius=4)
 
 	def draw_interpolation(self, robot_img, environment):
-		position = self.tree
-		orientation = self.orientation_tree
-		interpolation_factor = 150 
-		interpolation = 0
-		
-		self.img = pygame.image.load(robot_img)
-
-
+		"""Draws the interpolation from the initial configuration to the goal configuration."""
 		for x, y, theta in zip(self.x_interpolation[1:], self.y_interpolation[1:], self.theta_interpolation[1:]):
-			for i, j, k in zip(x, y, theta):
-				if interpolation%interpolation_factor == 0:
-					# Create the translation and rotation animation 
-					rotated = pygame.transform.rotozoom(surface=self.img,
-						angle=k, scale=1)
-					rect = rotated.get_rect(center=(i, j))			
-					environment.map.blit(source=rotated, dest=rect) 
-				
-				interpolation += 1
+			for interpolation, (i, j, k) in enumerate(zip(x, y, theta)):
+				if self.obstacles != []:
+					environment.draw_obstacles()
+
+				if interpolation%self.interpolation_factor == 0:
+					self.draw_robot_configuration(image=robot_img, position=(i, j), orientation=k,
+						environment=environment)
+
+		self.draw_goal_robot_configuration(robot_img=robot_img, environment=environment)
+
+	def draw_trajectory(self, robot_img, environment):
+		"""Draws the interpolation from the initial configuration to the goal configuration."""
+		x_interpolation = self.x_interpolation[1:]
+		y_interpolation = self.y_interpolation[1:]
+		theta_interpolation = self.theta_interpolation[1:]
+
+		for x, y, theta in zip(x_interpolation, y_interpolation, theta_interpolation):
+			for interpolation, (i, j, k) in enumerate(zip(x, y, theta)):
+				if self.obstacles != []:
+					environment.draw_obstacles()
+				self.draw_initial_robot_configuration(robot_img=robot_img, environment=environment)
+				self.draw_goal_robot_configuration(robot_img=robot_img, environment=environment)
+				self.draw_robot_configuration(image=robot_img, position=(i, j), orientation=k,
+					environment=environment)				
+
+				# Refresh the screen
+				pygame.display.update()
+				pygame.time.delay(5) 
+				environment.map.fill(self.WHITE)
+
+	def draw_robot_configuration(self, image, position, orientation, environment):
+		"""Creates the translation and rotation animation.""" 
+		rotated = pygame.transform.rotozoom(surface=image, angle=orientation, scale=1)
+		rect = rotated.get_rect(center=position)			
+		environment.map.blit(source=rotated, dest=rect)  
+
+		return rect

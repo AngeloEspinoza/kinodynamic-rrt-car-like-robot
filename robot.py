@@ -34,7 +34,7 @@ class Robot():
 		self.rect = self.rotated.get_rect(center=(self.x, self.y))
 		
 		# Time variant 
-		self.dt = 1 # Delta time
+		self.dt = 0.00 # Delta time
 		self.last_time = pygame.time.get_ticks() # Last time recorded
 		self.x_position = []
 		self.y_position = []
