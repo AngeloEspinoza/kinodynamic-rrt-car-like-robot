@@ -27,7 +27,7 @@ class Graph():
 		self.robot_last_position = []
 		self.robot_last_orientation = []
 		self.controls = []
-		self.is_forward_simulation_finished = False
+		self.is_forward_simulation_finished = True
 		self.is_goal_found = False
 		self.is_forward_simulation_time_finished = False
 		self.iteration = 0
@@ -60,6 +60,7 @@ class Graph():
 		self.theta_interpolation.append(self.x_init[2])
 
 		self.u_news = []
+		self.theta_news = []
 
 		# Colors 
 		self.WHITE = (255, 255, 255)
@@ -94,18 +95,17 @@ class Graph():
 
 		return True
 
-	def generate_random_node(self):
+	def generate_random_node(self, bias):
 		"""Generates a random configuration.
 
-		The position (x, y) of the robot is generated given
-		an uniform distribution of the size of the screen
-		width and height, while the orientation is generated from
-		0 to 360 degrees. 
-
+		The position (x, y) of the robot is generated given	an uniform
+		distribution of the size of the screen width and height, while
+		the orientation (theta)	is generated from 0 to 360 degrees. 
 
 		Parameters
 		----------
-		None
+		bias : int
+			Goal bias percentage.
 
 		Returns
 		-------
@@ -116,7 +116,9 @@ class Graph():
 		self.x_rand = int(random.uniform(0, self.WIDTH)), int(random.uniform(0, self.HEIGHT)), \
 			math.radians(random.uniform(0, 360))
 
-		if self.iteration%3 == 0:
+		bias_percentage = 10 - bias//10 if bias != 100 else 1
+
+		if self.iteration%bias_percentage == 0:
 			self.x_rand = self.x_goal
 
 		return self.x_rand
@@ -197,7 +199,7 @@ class Graph():
 		"""
 		time = robot.dt
 
-		self.is_forward_simulation_finished = True
+		self.is_forward_simulation_finished = False
 
 		if time <= self.max_simulation_time:
 			robot.draw(map=environment.map) # Draw robot at each forward in time simulation
@@ -207,9 +209,10 @@ class Graph():
 			self.y_positions.append(robot.y)
 			self.theta_orientations.append(robot.theta)
 		else:
-			self.is_forward_simulation_finished = False
-			self.max_simulation_time = 4				
-
+			self.is_forward_simulation_finished = True
+			self.max_simulation_time = 4	
+			robot.dt = 0 
+			time = robot.dt
 
 			# Sample control input
 			self.u1 = random.uniform(-0.4, 0.4)
@@ -235,18 +238,12 @@ class Graph():
 				self.y_positions = []
 				self.theta_orientations = []
 
-				robot.dt = 0 
-				time = robot.dt
-
 				return self.robot_last_position
 
 			else:
 				self.x_positions = []
 				self.y_positions = []
-				self.theta_orientations = []
-
-				robot.dt = 0 
-				time = robot.dt
+				self.theta_orientations = []				
 
 				# Reconfigure the robot position and orientation
 				robot.x, robot.y = self.last_position[:2]
@@ -299,6 +296,7 @@ class Graph():
 			
 			# Append new controls to a list 
 			self.u_news.append(self.u_new)
+			self.theta_news.append(self.theta_new)
 
 			if self.is_goal_reached():
 				self.goal_configuration = self.number_of_nodes-1 
@@ -306,7 +304,6 @@ class Graph():
 			
 			self.last_position = self.u_new
 			self.last_orientation = self.theta_new
-			# environment.compare(position=self.last_position)
 
 			robot.x, robot.y = self.last_position[:2]
 			robot.theta = self.last_orientation
@@ -469,7 +466,7 @@ class Graph():
 		position = self.x_init[:2]
 		orientation = math.degrees(self.x_init[2])
 
-		self.draw_robot_configuration(image=robot_img, position=position,	orientation=orientation,
+		self.draw_robot_configuration(image=robot_img, position=position, orientation=orientation,
 			environment=environment)
 
 	def draw_goal_robot_configuration(self, robot_img, environment):
@@ -477,24 +474,31 @@ class Graph():
 		position = self.x_goal[:2]
 		orientation = math.degrees(self.x_goal[2])
 
-		self.draw_robot_configuration(image=robot_img, position=position,	orientation=orientation,
+		self.draw_robot_configuration(image=robot_img, position=position, orientation=orientation,
 			environment=environment)
-
 
 	def draw_random_robot_configuration(self, robot_img, environment):
 		"""Draws the x_rand configuration."""
 		position = self.x_rand[:2]
 		orientation = math.degrees(self.x_rand[2])
 
-		rect = self.draw_robot_configuration(image=robot_img, position=position,	orientation=orientation,
+		rect = self.draw_robot_configuration(image=robot_img, position=position, orientation=orientation,
 			environment=environment)
 
 		return rect
 
+	def draw_new_robot_configuration(self, robot_img, environment):
+		"""Draws the x_goal configuration."""
+		for i in range(len(self.u_news)):
+			position = self.u_news[i]
+			orientation = self.theta_news[i]
+			self.draw_robot_configuration(image=robot_img, position=position, orientation=orientation,
+				environment=environment)
+
 	def draw_path_to_goal(self, map_):
 		"""Draws the path from the x_goal node to the x_init node."""
 		for i in range(len(self.path_coordinates)-1):
-			pygame.draw.circle(surface=map_, color=self.BLACK, center=self.path_coordinates[i], radius=4)
+			pygame.draw.circle(surface=map_, color=self.BLACK, center=self.path_coordinates[i], radius=3)
 
 	def draw_interpolation(self, robot_img, environment):
 		"""Draws the interpolation from the initial configuration to the goal configuration."""

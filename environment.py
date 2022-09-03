@@ -60,9 +60,6 @@ class Environment():
 			pygame.draw.line(surface=self.map, color=self.BROWN,
 				start_pos=trail_set_start, end_pos=trail_set_end)
 
-		# if self.trail_set.__sizeof__() > 30000:
-		# 	self.trail_set.pop(0)
-
 		self.trail_set.append(position)
 
 	def store_trails(self):

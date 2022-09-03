@@ -28,13 +28,15 @@ class Robot():
 		self.max_speed = self.meters_to_pixels(meters=0.02) # m/s
 		self.min_speed = self.meters_to_pixels(meters=-0.02) # m/s
 
-		# Graphics 
-		self.img = pygame.image.load(robot_img)
+		# Graphics
+		self.init = pygame.image.load(robot_img[0])
+		self.goal = pygame.image.load(robot_img[1])
+		self.img = pygame.image.load(robot_img[2])
 		self.rotated = self.img
 		self.rect = self.rotated.get_rect(center=(self.x, self.y))
 		
 		# Time variant 
-		self.dt = 0.00 # Delta time
+		self.dt = 0.0 # Delta time
 		self.last_time = pygame.time.get_ticks() # Last time recorded
 		self.x_position = []
 		self.y_position = []
@@ -74,21 +76,11 @@ class Robot():
 		----------
 		event : Event
 			All events happenning in the screen.
+		u : list
+			Linear and angular velocity.
 		"""
-		if event is not None:
-			if event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_RIGHT:
-					self.v += self.meters_to_pixels(0.0001)
-				elif event.key == pygame.K_LEFT:
-					self.v -= self.meters_to_pixels(0.0001)
-				elif event.key == pygame.K_UP:
-					self.phi += math.radians(0.03)
-				elif event.key == pygame.K_DOWN:
-					self.phi -= math.radians(0.03)
-
-		# Stablish the control input u to be the steering angle phi
-		self.u1 = u[0]
-		self.u2 = u[1]
+		# Stablish the control input u 
+		self.u1, self.u2 = u
 
 		# Car-like kinematic robot model
 		self.x += self.u1 * math.cos(math.radians(self.theta)) * self.dt
