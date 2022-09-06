@@ -18,14 +18,14 @@ parser.add_argument('-dt', '--delta', type=float, metavar='', required=False, de
 parser.add_argument('-init', '--x_init', nargs='+', type=int, metavar='', required=False,
 	default=(50, 50, 0.17), help='Initial node position in X and Y, respectively')
 parser.add_argument('-goal', '--x_goal', nargs='+', type=int, metavar='', required=False,
-	default=(200, 200, -0.17), help='Goal node position in X and Y, respectively')
+	default=(540, 380, -0.17), help='Goal node position in X and Y, respectively')
 parser.add_argument('-src', '--show_random_configurations', type=bool,
 	action=argparse.BooleanOptionalAction, metavar='', required=False, 
 	help='Show random configurations on screen')
 parser.add_argument('-snc', '--show_new_configurations', type=bool,
  	action=argparse.BooleanOptionalAction, metavar='', required=False,
  	help='Show new configurations on screen')
-parser.add_argument('-bp', '--bias_percentage', type=int, metavar='', required=False, default=30,
+parser.add_argument('-bp', '--bias_percentage', type=int, metavar='', required=False, default=50,
 	help='Amount of bias the RRT from 1 to 100')
 parser.add_argument('-ptg', '--path_to_goal', type=bool, action=argparse.BooleanOptionalAction, 
 	metavar='', required=False, help='Draws the milestones from path to goal')

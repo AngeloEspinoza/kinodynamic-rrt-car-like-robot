@@ -219,13 +219,15 @@ class Graph():
 			self.u2 = random.uniform(-0.5, 0.5)
 			self.u = [self.u1, self.u2]
 
-			# Store the last trails of the robot
-			environment.store_trails()
 
 			# Simulation time restarted 
 			collision_free = self.is_free(configuration=robot.rect, obstacles=obstacles)
 
 			if collision_free:
+				# Store the last trails of the robot, and empty the piecewise trail list
+				environment.store_trails()
+				environment.empty_trails()
+
 				# Store and last configuration of the robot
 				self.store_configuration(position=(robot.x, robot.y), orientation=robot.theta)
 				self.store_controls(controls=self.u)
@@ -241,6 +243,9 @@ class Graph():
 				return self.robot_last_position
 
 			else:
+				# Empty the piecewise trail list
+				environment.empty_trails()
+
 				self.x_positions = []
 				self.y_positions = []
 				self.theta_orientations = []				
@@ -288,10 +293,10 @@ class Graph():
 			obstacles=obstacles)
 
 		if simulation is not None:			
-			self.iteration += 1 # Make a tree expansion			
+			self.iteration += 1 # One tree expansion done
+					
+			# Robot position, and orientation with the minimum distance to x_rand  
 			self.u_new = self.nearest_neighbor(simulation, x_rand) # New control input
-
-			# Robot heading angle with the minimum distance to x_rand  
 			self.theta_new = self.robot_last_orientation[self.min_distance]
 			
 			# Append new controls to a list 
@@ -309,6 +314,7 @@ class Graph():
 			robot.theta = self.last_orientation
 
 			return self.u_new, self.theta_new
+
 
 	def generate_parents(self, values, parent):
 		"""Generates a list of parents and their children.
@@ -419,7 +425,7 @@ class Graph():
 
 	def is_goal_reached(self):
 		"""Checks whether the tree has reached the goal."""
-		POSITION_BOUNDARY = 20
+		POSITION_BOUNDARY = 40
 
 		goal_position = self.x_goal[:2]
 		last_position_x, last_position_y = self.last_position[0], self.last_position[1]

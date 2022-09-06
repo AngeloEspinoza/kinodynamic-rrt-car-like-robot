@@ -39,7 +39,7 @@ class Environment():
 		self.are_obstacles_drawn = False
 
 	def trail(self, position):
-		"""Draw the robot trail.
+		"""Draws the robot trail.
 		
 		Given two immediate different positions of the robots a straight
 		line is draw between the positions. The same action is done so on
@@ -57,10 +57,14 @@ class Environment():
 		for i in range(len(self.trail_set)-1):
 			trail_set_start = self.trail_set[i][0], self.trail_set[i][1]
 			trail_set_end = self.trail_set[i+1][0], self.trail_set[i+1][1]
-			pygame.draw.line(surface=self.map, color=self.BROWN,
-				start_pos=trail_set_start, end_pos=trail_set_end)
+			pygame.draw.line(surface=self.map, color=self.BROWN, start_pos=trail_set_start, end_pos=trail_set_end)
 
 		self.trail_set.append(position)
+
+	def empty_trails(self):
+		"""Empty the list so does not appear a straight line."""	
+		self.trail_set = []
+
 
 	def store_trails(self):
 		"""Stores the set of trails.
@@ -78,9 +82,6 @@ class Environment():
 		"""
 		# Append each simulated trail 
 		self.trail_sets.append(self.trail_set)
-
-		# Empty the list so does not appear a straight line	
-		self.trail_set = []
 
 	def compare(self, position):
 		"""Compares the last position with the set of all the
@@ -122,8 +123,8 @@ class Environment():
 			for i in range(len(trail)-1):
 				trail_set_start = trail[i][0], trail[i][1]
 				trail_set_end = trail[i+1][0], trail[i+1][1]
-				pygame.draw.line(surface=self.map, color=self.RED,
-					start_pos=trail_set_start, end_pos=trail_set_end)
+				pygame.draw.line(surface=self.map, color=self.RED, start_pos=trail_set_start,
+					end_pos=trail_set_end)
 
 	def make_obstacles_T(self, initial_point):
 		"""
