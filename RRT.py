@@ -294,7 +294,7 @@ class Graph():
 
 		if simulation is not None:			
 			self.iteration += 1 # One tree expansion done
-					
+
 			# Robot position, and orientation with the minimum distance to x_rand  
 			self.u_new = self.nearest_neighbor(simulation, x_rand) # New control input
 			self.theta_new = self.robot_last_orientation[self.min_distance]
@@ -506,20 +506,25 @@ class Graph():
 		for i in range(len(self.path_coordinates)-1):
 			pygame.draw.circle(surface=map_, color=self.BLACK, center=self.path_coordinates[i], radius=3)
 
-	def draw_interpolation(self, robot_img, environment):
+	def draw_interpolation(self, robot, environment):
 		"""Draws the interpolation from the initial configuration to the goal configuration."""
-		for x, y, theta in zip(self.x_interpolation[1:], self.y_interpolation[1:], self.theta_interpolation[1:]):
+		x_interpolation = self.x_interpolation[1:]
+		y_interpolation = self.y_interpolation[1:]
+		theta_interpolation = self.theta_interpolation[1:]
+		
+		for x, y, theta in zip(x_interpolation, y_interpolation, theta_interpolation):
 			for interpolation, (i, j, k) in enumerate(zip(x, y, theta)):
 				if self.obstacles != []:
 					environment.draw_obstacles()
 
 				if interpolation%self.interpolation_factor == 0:
-					self.draw_robot_configuration(image=robot_img, position=(i, j), orientation=k,
+					self.draw_robot_configuration(image=robot.img, position=(i, j), orientation=k,
 						environment=environment)
 
-		self.draw_goal_robot_configuration(robot_img=robot_img, environment=environment)
+		self.draw_initial_robot_configuration(robot_img=robot.init, environment=environment)
+		self.draw_goal_robot_configuration(robot_img=robot.goal, environment=environment)
 
-	def draw_trajectory(self, robot_img, environment):
+	def draw_trajectory(self, robot, environment):
 		"""Draws the interpolation from the initial configuration to the goal configuration."""
 		x_interpolation = self.x_interpolation[1:]
 		y_interpolation = self.y_interpolation[1:]
@@ -529,9 +534,10 @@ class Graph():
 			for interpolation, (i, j, k) in enumerate(zip(x, y, theta)):
 				if self.obstacles != []:
 					environment.draw_obstacles()
-				self.draw_initial_robot_configuration(robot_img=robot_img, environment=environment)
-				self.draw_goal_robot_configuration(robot_img=robot_img, environment=environment)
-				self.draw_robot_configuration(image=robot_img, position=(i, j), orientation=k,
+				
+				self.draw_initial_robot_configuration(robot_img=robot.init, environment=environment)
+				self.draw_goal_robot_configuration(robot_img=robot.goal, environment=environment)
+				self.draw_robot_configuration(image=robot.img, position=(i, j), orientation=k,
 					environment=environment)				
 
 				# Refresh the screen

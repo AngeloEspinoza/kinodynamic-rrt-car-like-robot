@@ -41,12 +41,12 @@ args = parser.parse_args()
 pygame.init()
 
 # Constants
-ROBOT_INIT_CONF = 'images/initial.png'
-ROBOT_GOAL_CONF = 'images/goal.png'
+ROBOT_INIT_PATH = 'images/initial.png'
+ROBOT_GOAL_PATH = 'images/goal.png'
 ROBOT_IMG_PATH = 'images/robot.png'
 MAP_DIMENSIONS = 640, 480
 
-robot_images = [ROBOT_INIT_CONF, ROBOT_GOAL_CONF, ROBOT_IMG_PATH]
+robot_images = [ROBOT_INIT_PATH, ROBOT_GOAL_PATH, ROBOT_IMG_PATH]
 
 # Initial and final configuration of the robot
 x_init = args.x_init # px, px, rad
@@ -127,9 +127,9 @@ def main():
 			if args.path_to_goal:
 				graph.draw_path_to_goal(map_=environment.map)
 			if args.move_robot:
-				graph.draw_trajectory(robot_img=robot.img, environment=environment)
+				graph.draw_trajectory(robot=robot, environment=environment)
 			if args.show_interpolation:
-				graph.draw_interpolation(robot_img=robot.img, environment=environment)
+				graph.draw_interpolation(robot=robot, environment=environment)
 				pygame.display.update()
 				pygame.time.delay(5000) 
 
