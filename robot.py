@@ -8,8 +8,8 @@ class Robot():
 
 	Attributes
 	----------
-	start_pos : tuple
-		Initial position of the robot in X and Y respectively.
+	start : tuple
+		Initial configuration of the robot in X, Y, and theta, respectively.
 	robot_img : str
 		The robot image path.
 	length : float
@@ -17,11 +17,11 @@ class Robot():
 		car-like robot.
 	"""	
 
-	def __init__(self, start_pos, robot_img, length):
+	def __init__(self, start, robot_img, length):
 		# Robot settings
-		self.x = start_pos[0] # X position
-		self.y = start_pos[1] # Y position
-		self.theta = 0 # Initial heading angle (rad)
+		self.x = start[0] # X position
+		self.y = start[1] # Y position
+		self.theta = math.degrees(start[2]) # Initial heading angle (rad)
 		self.phi = 0 # Initial steering angle (rad)
 		self.v = self.meters_to_pixels(meters=0.01) # m/s 
 		self.L = self.meters_to_pixels(meters=length) # m (meters)

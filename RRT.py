@@ -141,7 +141,7 @@ class Graph():
 		float
 			R^2 x S^1 metric.
 		"""
-		theta = self.x_rand[2]
+		theta = self.x_rand[2] # rad
 		alpha = min(abs(self.last_orientation - theta), 2*math.pi - 
 			abs(self.last_orientation - theta))
 
@@ -315,7 +315,6 @@ class Graph():
 
 			return self.u_new, self.theta_new
 
-
 	def generate_parents(self, values, parent):
 		"""Generates a list of parents and their children.
 		
@@ -381,18 +380,17 @@ class Graph():
 		-------
 		None
 		"""
-		if self.is_goal_reached:
-			self.path = []
-			self.path.append(self.goal_configuration)
-			new_configuration = self.parent[self.goal_configuration] # Parent of the x_goal node
+		self.path = []
+		self.path.append(self.goal_configuration)
+		new_configuration = self.parent[self.goal_configuration] # Parent of the x_goal node
 
-			while new_configuration != 0:
-				# Append the parent of the parent and update the configuration
-				self.path.append(new_configuration)
-				new_configuration = self.parent[new_configuration]
+		while new_configuration != 0:
+			# Append the parent of the parent and update the configuration
+			self.path.append(new_configuration)
+			new_configuration = self.parent[new_configuration]
 
-			# Append the parent 0 (correspondant to the x_init node)
-			self.path.append(0)
+		# Append the parent 0 (correspondant to the x_init node)
+		self.path.append(0)
 
 	def get_path_coordinates(self):
 		"""Collects the correspondant coordinates.
@@ -424,20 +422,31 @@ class Graph():
 		return self.path_coordinates
 
 	def is_goal_reached(self):
-		"""Checks whether the tree has reached the goal."""
-		POSITION_BOUNDARY = 40
-
-		goal_position = self.x_goal[:2]
+		"""Checks if the tree has reached the goal."""
+		goal_position, goal_orientation = self.x_goal[:2], self.x_goal[2]
 		last_position_x, last_position_y = self.last_position[0], self.last_position[1]
 		goal_position_x, goal_position_y = goal_position[0], goal_position[1]
+		last_orientation = math.radians(self.last_orientation)
 
-		# Allowed region for the robot to reach goal
-		upper_condition_x = last_position_x <= goal_position_x+POSITION_BOUNDARY
-		lower_condition_x = last_position_x >= goal_position_x-POSITION_BOUNDARY
-		upper_condition_y = last_position_y <= goal_position_y+POSITION_BOUNDARY
-		lower_condition_y = last_position_y >= goal_position_y-POSITION_BOUNDARY		
+		# 
+		if last_orientation >= math.pi:
+			last_orientation = 2*math.pi - last_orientation
+		elif last_orientation <= -math.pi:
+			last_orientation = -2*math.pi + last_orientation
 
-		if upper_condition_x and lower_condition_x and upper_condition_y and lower_condition_y:
+		# Allowed position and orintation region for the robot to reach goal
+		upper_condition_x = last_position_x <= goal_position_x+self.position_boundary
+		lower_condition_x = last_position_x >= goal_position_x-self.position_boundary
+		upper_condition_y = last_position_y <= goal_position_y+self.position_boundary
+		lower_condition_y = last_position_y >= goal_position_y-self.position_boundary
+		upper_condition_theta = last_orientation <= goal_orientation+self.orientation_boundary 
+		lower_condition_theta = last_orientation >= goal_orientation-self.orientation_boundary
+		
+		position_conditions = upper_condition_x and lower_condition_x and upper_condition_y and \
+			lower_condition_y
+		orientation_conditions = upper_condition_theta and lower_condition_theta
+
+		if position_conditions and orientation_conditions:
 			return True
 
 		return False

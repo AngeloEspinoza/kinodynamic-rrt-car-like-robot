@@ -15,10 +15,12 @@ parser.add_argument('-n', '--nodes', type=int, metavar='', required=False, defau
 	help='Maximum number of nodes')
 parser.add_argument('-dt', '--delta', type=float, metavar='', required=False, default=0.05,
 	help='Fixed time interval')
-parser.add_argument('-init', '--x_init', nargs='+', type=int, metavar='', required=False,
-	default=(50, 50, 0.17), help='Initial node position in X and Y, respectively')
-parser.add_argument('-goal', '--x_goal', nargs='+', type=int, metavar='', required=False,
-	default=(540, 380, -0.17), help='Goal node position in X and Y, respectively')
+parser.add_argument('-init', '--x_init', nargs='+', type=float, metavar='', required=False,
+	default=(50, 50, 0.17), help='Initial node configuration in X, Y, and theta in pixels and'
+	'radians, respectively')
+parser.add_argument('-goal', '--x_goal', nargs='+', type=float, metavar='', required=False,
+	default=(540, 380, -0.17), help='Goal node configuration in X, Y, and theta in pixels and'
+	'radians, respectively')
 parser.add_argument('-src', '--show_random_configurations', type=bool,
 	action=argparse.BooleanOptionalAction, metavar='', required=False, 
 	help='Show random configurations on screen')
@@ -35,6 +37,10 @@ parser.add_argument('-si', '--show_interpolation', type=bool, action=argparse.Bo
 parser.add_argument('-mr', '--move_robot', type=bool, action=argparse.BooleanOptionalAction, 
 	metavar='', required=False, default=True,
 	help='Shows the movements of the robot from the start to the end')
+parser.add_argument('-pb', '--position_boundary', type=int, metavar='', required=False, default=40,
+	help='Allowed position region of the pixels for the robot to reach the goal')
+parser.add_argument('-ob', '--orientation_boundary', type=float, metavar='', required=False,
+ 	default=math.pi, help='Allowed orientation region of the angle for the robot to reach the goal')
 args = parser.parse_args()
 
 # Initialization 
@@ -54,7 +60,7 @@ x_goal = args.x_goal # px, px, rad
 
 # Instantiating the environment, robot, and RRT 
 environment = environment.Environment(dimensions=MAP_DIMENSIONS)
-robot = robot.Robot(start_pos=x_init, robot_img=robot_images,	length=0.01)
+robot = robot.Robot(start=x_init, robot_img=robot_images, length=0.01)
 graph = RRT.Graph(start=x_init, goal=x_goal, map_dimensions=MAP_DIMENSIONS)
 
 def main():
@@ -71,7 +77,8 @@ def main():
 	node_value = 0
 	iteration = 0	
 	k = 0
-
+	graph.position_boundary = args.position_boundary
+	graph.orientation_boundary = args.orientation_boundary
 	environment.make_obstacles()
 
 	while run and k < args.nodes:
