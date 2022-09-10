@@ -66,8 +66,8 @@ graph = RRT.Graph(start=x_init, goal=x_goal, map_dimensions=MAP_DIMENSIONS)
 def main():
 	run = True
 	clock = pygame.time.Clock()	
-	tree = []
-	orientation_tree = []
+	tree = [] # Positions in pixels
+	orientation_tree = [] # Orientations in degrees
 	parent = []
 	values = []
 	tree.append(x_init[:2]) # Append initial node
@@ -83,7 +83,7 @@ def main():
 
 	while run and k < args.nodes:
 		# Make sure the loop runs at 60 FPS
-		clock.tick(environment.FPS) # CHECK IF TOO SLOW SIMULATION
+		clock.tick(environment.FPS) 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				run = False

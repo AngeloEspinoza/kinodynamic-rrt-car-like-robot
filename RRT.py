@@ -33,7 +33,7 @@ class Graph():
 		self.iteration = 0
 
 		self.robot_last_position.append(self.x_init[:2])
-		self.robot_last_orientation.append(self.x_init[2])
+		self.robot_last_orientation.append(math.degrees(self.x_init[2]))
 
 		self.last_position = self.x_init[:2]
 		self.last_orientation = self.x_init[2]
@@ -298,7 +298,7 @@ class Graph():
 			# Robot position, and orientation with the minimum distance to x_rand  
 			self.u_new = self.nearest_neighbor(simulation, x_rand) # New control input
 			self.theta_new = self.robot_last_orientation[self.min_distance]
-			
+
 			# Append new controls to a list 
 			self.u_news.append(self.u_new)
 			self.theta_news.append(self.theta_new)
@@ -414,7 +414,9 @@ class Graph():
 
 		for i in range(len(self.x_position)):
 			for j in range(len(self.path_coordinates)):
-				if self.x_position[i][-1] == self.path_coordinates[j][0] and self.y_position[i][-1] == self.path_coordinates[j][1]:
+				x_position = self.x_position[i][-1] == self.path_coordinates[j][0]
+				y_position = self.y_position[i][-1] == self.path_coordinates[j][1]
+				if  x_position and y_position:
 					self.x_interpolation.append(self.x_position[i])
 					self.y_interpolation.append(self.y_position[i])
 					self.theta_interpolation.append(self.theta_orientation[i])
@@ -434,7 +436,7 @@ class Graph():
 		elif last_orientation <= -math.pi:
 			last_orientation = -2*math.pi + last_orientation
 
-		# Allowed position and orintation region for the robot to reach goal
+		# Allowed position and orientation region for the robot to reach goal
 		upper_condition_x = last_position_x <= goal_position_x+self.position_boundary
 		lower_condition_x = last_position_x >= goal_position_x-self.position_boundary
 		upper_condition_y = last_position_y <= goal_position_y+self.position_boundary
@@ -497,8 +499,8 @@ class Graph():
 		position = self.x_rand[:2]
 		orientation = math.degrees(self.x_rand[2])
 
-		rect = self.draw_robot_configuration(image=robot_img, position=position, orientation=orientation,
-			environment=environment)
+		rect = self.draw_robot_configuration(image=robot_img, position=position,
+		 	orientation=orientation, environment=environment)
 
 		return rect
 
@@ -507,20 +509,21 @@ class Graph():
 		for i in range(len(self.u_news)):
 			position = self.u_news[i]
 			orientation = self.theta_news[i]
-			self.draw_robot_configuration(image=robot_img, position=position, orientation=orientation,
-				environment=environment)
+			self.draw_robot_configuration(image=robot_img, position=position,
+			 	orientation=orientation, environment=environment)
 
 	def draw_path_to_goal(self, map_):
 		"""Draws the path from the x_goal node to the x_init node."""
 		for i in range(len(self.path_coordinates)-1):
-			pygame.draw.circle(surface=map_, color=self.BLACK, center=self.path_coordinates[i], radius=3)
+			pygame.draw.circle(surface=map_, color=self.BLACK, center=self.path_coordinates[i],
+				radius=3)
 
 	def draw_interpolation(self, robot, environment):
 		"""Draws the interpolation from the initial configuration to the goal configuration."""
 		x_interpolation = self.x_interpolation[1:]
 		y_interpolation = self.y_interpolation[1:]
 		theta_interpolation = self.theta_interpolation[1:]
-		
+
 		for x, y, theta in zip(x_interpolation, y_interpolation, theta_interpolation):
 			for interpolation, (i, j, k) in enumerate(zip(x, y, theta)):
 				if self.obstacles != []:

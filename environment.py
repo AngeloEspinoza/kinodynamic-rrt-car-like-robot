@@ -192,8 +192,7 @@ class Environment():
 
 		for obstacle in self.obstacles:
 			for side in obstacle:
-				pygame.draw.rect(surface=self.map, color=self.GRAY,
-					rect=side)
+				pygame.draw.rect(surface=self.map, color=self.GRAY, rect=side)
 				obstacles.append(side)
 
 		return obstacles		
