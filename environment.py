@@ -22,7 +22,7 @@ class Environment():
 		self.GRAY = (105, 105, 105)
 
 		# Map dimensions
-		self.WIDTH, self.HEIGHT = dimensions[0], dimensions[1] 
+		self.WIDTH, self.HEIGHT = dimensions 
 
 		# Window settings
 		self.FPS = 120
@@ -57,7 +57,8 @@ class Environment():
 		for i in range(len(self.trail_set)-1):
 			trail_set_start = self.trail_set[i][0], self.trail_set[i][1]
 			trail_set_end = self.trail_set[i+1][0], self.trail_set[i+1][1]
-			pygame.draw.line(surface=self.map, color=self.BROWN, start_pos=trail_set_start, end_pos=trail_set_end)
+			pygame.draw.line(surface=self.map, color=self.BROWN, start_pos=trail_set_start,
+				end_pos=trail_set_end)
 
 		self.trail_set.append(position)
 

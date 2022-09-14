@@ -30,14 +30,14 @@ parser.add_argument('-snc', '--show_new_configurations', type=bool,
 parser.add_argument('-bp', '--bias_percentage', type=int, metavar='', required=False, default=50,
 	help='Amount of bias the RRT from 1 to 100')
 parser.add_argument('-ptg', '--path_to_goal', type=bool, action=argparse.BooleanOptionalAction, 
-	metavar='', required=False, help='Draws the milestones from path to goal')
+	metavar='', required=False, default=False, help='Draws the milestones from path to goal')
 parser.add_argument('-si', '--show_interpolation', type=bool, action=argparse.BooleanOptionalAction, 
 	metavar='', required=False, default=True, help='Draws the configurations needed to reach the'
 	 	'goal')
 parser.add_argument('-mr', '--move_robot', type=bool, action=argparse.BooleanOptionalAction, 
 	metavar='', required=False, default=True,
 	help='Shows the movements of the robot from the start to the end')
-parser.add_argument('-pb', '--position_boundary', type=int, metavar='', required=False, default=40,
+parser.add_argument('-pb', '--position_boundary', type=int, metavar='', required=False, default=25,
 	help='Allowed position region of the pixels for the robot to reach the goal')
 parser.add_argument('-ob', '--orientation_boundary', type=float, metavar='', required=False,
  	default=math.pi, help='Allowed orientation region of the angle for the robot to reach the goal')
@@ -137,17 +137,18 @@ def main():
 				graph.draw_trajectory(robot=robot, environment=environment)
 			if args.show_interpolation:
 				graph.draw_interpolation(robot=robot, environment=environment)
-				pygame.display.update()
-				pygame.time.delay(5000) 
 
 		if rand_collision_free and args.show_random_configurations:
-			random_rect = graph.draw_random_robot_configuration(robot_img=robot.img, environment=environment)
+			random_rect = graph.draw_random_robot_configuration(robot_img=robot.img,
+				environment=environment)
 			graph.draw_random_node(map=environment.map)
 
 		iteration += 1
 		robot.dt += args.delta
-		pygame.display.update()
-		environment.map.fill(environment.WHITE)
+
+		if not graph.is_goal_found:
+			pygame.display.update()
+			environment.map.fill(environment.WHITE)
 
 	pygame.quit()
 	sys.exit()

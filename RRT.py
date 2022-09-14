@@ -430,20 +430,27 @@ class Graph():
 		goal_position_x, goal_position_y = goal_position[0], goal_position[1]
 		last_orientation = math.radians(self.last_orientation)
 
-		# 
-		if last_orientation >= math.pi:
-			last_orientation = 2*math.pi - last_orientation
-		elif last_orientation <= -math.pi:
+		# Upper and lower allowed offsets
+		upper_offset_x = goal_position_x+self.position_boundary
+		lower_offset_x = goal_position_x-self.position_boundary
+		upper_offset_y = goal_position_y+self.position_boundary
+		lower_offset_y = goal_position_y-self.position_boundary
+		upper_offset_theta = goal_orientation+self.orientation_boundary
+		lower_offset_theta = goal_orientation-self.orientation_boundary
+
+		if last_orientation >= upper_offset_theta:
 			last_orientation = -2*math.pi + last_orientation
+		elif last_orientation <= lower_offset_theta:
+			last_orientation = 2*math.pi + last_orientation
 
 		# Allowed position and orientation region for the robot to reach goal
-		upper_condition_x = last_position_x <= goal_position_x+self.position_boundary
-		lower_condition_x = last_position_x >= goal_position_x-self.position_boundary
-		upper_condition_y = last_position_y <= goal_position_y+self.position_boundary
-		lower_condition_y = last_position_y >= goal_position_y-self.position_boundary
-		upper_condition_theta = last_orientation <= goal_orientation+self.orientation_boundary 
-		lower_condition_theta = last_orientation >= goal_orientation-self.orientation_boundary
-		
+		upper_condition_x = last_position_x <= upper_offset_x
+		lower_condition_x = last_position_x >= lower_offset_x
+		upper_condition_y = last_position_y <= upper_offset_y
+		lower_condition_y = last_position_y >= lower_offset_y
+		upper_condition_theta = last_orientation <= upper_offset_theta 
+		lower_condition_theta = last_orientation >= lower_offset_theta
+
 		position_conditions = upper_condition_x and lower_condition_x and upper_condition_y and \
 			lower_condition_y
 		orientation_conditions = upper_condition_theta and lower_condition_theta
@@ -535,6 +542,9 @@ class Graph():
 
 		self.draw_initial_robot_configuration(robot_img=robot.init, environment=environment)
 		self.draw_goal_robot_configuration(robot_img=robot.goal, environment=environment)
+		
+		pygame.display.update()
+		pygame.time.delay(5000) 
 
 	def draw_trajectory(self, robot, environment):
 		"""Draws the interpolation from the initial configuration to the goal configuration."""
@@ -554,7 +564,7 @@ class Graph():
 
 				# Refresh the screen
 				pygame.display.update()
-				pygame.time.delay(5) 
+				pygame.time.delay(3) 
 				environment.map.fill(self.WHITE)
 
 	def draw_robot_configuration(self, image, position, orientation, environment):
