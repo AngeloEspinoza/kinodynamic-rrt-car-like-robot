@@ -5,6 +5,7 @@ import RRT
 import math
 import argparse
 import sys
+import os
 
 # Command line arguments
 parser = argparse.ArgumentParser(description='Implements the kinodynamic RRT algorithm for a'  
@@ -41,6 +42,9 @@ parser.add_argument('-pb', '--position_boundary', type=int, metavar='', required
 	help='Allowed position region of the pixels for the robot to reach the goal')
 parser.add_argument('-ob', '--orientation_boundary', type=float, metavar='', required=False,
  	default=math.pi, help='Allowed orientation region of the angle for the robot to reach the goal')
+parser.add_argument('-stb', '--show_tree_building', type=bool, 
+	action=argparse.BooleanOptionalAction,	metavar='', required=False, default=True,
+	help='Shows the simulation forward in time')
 args = parser.parse_args()
 
 # Initialization 
@@ -59,7 +63,8 @@ x_init = args.x_init # px, px, rad
 x_goal = args.x_goal # px, px, rad
 
 # Instantiating the environment, robot, and RRT 
-environment = environment.Environment(dimensions=MAP_DIMENSIONS)
+environment = environment.Environment(dimensions=MAP_DIMENSIONS, 
+	show_tree_building=args.show_tree_building, has_obstacles=args.obstacles)
 robot = robot.Robot(start=x_init, robot_img=robot_images, length=0.01)
 graph = RRT.Graph(start=x_init, goal=x_goal, map_dimensions=MAP_DIMENSIONS)
 
@@ -79,9 +84,13 @@ def main():
 	k = 0
 	graph.position_boundary = args.position_boundary
 	graph.orientation_boundary = args.orientation_boundary
+	graph.show_tree_building = args.show_tree_building
 	environment.make_obstacles()
 
-	while run and k < args.nodes:
+	if not args.show_tree_building:
+		print('[INFO] Simulating the system... Please, wait.')
+
+	while run and k < args.nodes:		
 		# Make sure the loop runs at 60 FPS
 		clock.tick(environment.FPS) 
 		for event in pygame.event.get():
@@ -93,7 +102,9 @@ def main():
 		graph.draw_goal_node(map=environment.map)
 		graph.draw_initial_robot_configuration(robot_img=robot.init, environment=environment)
 		graph.draw_goal_robot_configuration(robot_img=robot.goal, environment=environment)
-		environment.draw_trajectory_trail()
+
+		if args.show_tree_building:
+			environment.draw_trajectory_trail()
 
 		if not graph.is_goal_found:
 			if graph.is_forward_simulation_finished:
@@ -126,19 +137,27 @@ def main():
 					graph.path_to_goal()
 					graph.get_path_coordinates()
 
-		if args.show_new_configurations:
+		if args.show_new_configurations and args.show_tree_building:
 			graph.draw_new_robot_configuration(robot_img=robot.img, environment=environment)
 			graph.draw_new_node(map=environment.map)
 
 		if graph.is_goal_found:
+			if not args.show_tree_building:
+				environment.show_screen() # Show screen back
+				graph.draw_initial_robot_configuration(robot_img=robot.init, environment=environment)
+				graph.draw_goal_robot_configuration(robot_img=robot.goal, environment=environment)
+				environment.draw_trajectory_trail()
+				pygame.display.update()
+				pygame.time.delay(3000)
+
 			if args.path_to_goal:
-				graph.draw_path_to_goal(map_=environment.map)
+				graph.draw_path_to_goal(map=environment.map)
 			if args.move_robot:
 				graph.draw_trajectory(robot=robot, environment=environment)
 			if args.show_interpolation:
 				graph.draw_interpolation(robot=robot, environment=environment)
 
-		if rand_collision_free and args.show_random_configurations:
+		if rand_collision_free and args.show_random_configurations and args.show_tree_building:
 			random_rect = graph.draw_random_robot_configuration(robot_img=robot.img,
 				environment=environment)
 			graph.draw_random_node(map=environment.map)

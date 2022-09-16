@@ -202,9 +202,10 @@ class Graph():
 		self.is_forward_simulation_finished = False
 
 		if time <= self.max_simulation_time:
-			robot.draw(map=environment.map) # Draw robot at each forward in time simulation
+			if self.show_tree_building:
+				robot.draw(map=environment.map) # Draw robot at each forward in time simulation
 			robot.move(event=event, u=self .u) # Move the robot 
-			environment.trail(position=(robot.x, robot.y)) # Draw the trail
+			environment.trail(position=(robot.x, robot.y), draw_trail=self.show_tree_building)
 			self.x_positions.append(robot.x)
 			self.y_positions.append(robot.y)
 			self.theta_orientations.append(robot.theta)
@@ -519,10 +520,10 @@ class Graph():
 			self.draw_robot_configuration(image=robot_img, position=position,
 			 	orientation=orientation, environment=environment)
 
-	def draw_path_to_goal(self, map_):
+	def draw_path_to_goal(self, map):
 		"""Draws the path from the x_goal node to the x_init node."""
 		for i in range(len(self.path_coordinates)-1):
-			pygame.draw.circle(surface=map_, color=self.BLACK, center=self.path_coordinates[i],
+			pygame.draw.circle(surface=map, color=self.BLACK, center=self.path_coordinates[i],
 				radius=3)
 
 	def draw_interpolation(self, robot, environment):
@@ -544,7 +545,8 @@ class Graph():
 		self.draw_goal_robot_configuration(robot_img=robot.goal, environment=environment)
 		
 		pygame.display.update()
-		pygame.time.delay(5000) 
+		pygame.time.delay(5000)
+		environment.map.fill(self.WHITE) 
 
 	def draw_trajectory(self, robot, environment):
 		"""Draws the interpolation from the initial configuration to the goal configuration."""

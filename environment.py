@@ -8,9 +8,13 @@ class Environment():
 	----------
 	dimensions : tuple
 		The X and Y window dimensions.
+	show_tree_building : bool
+		Flag to show the RRT building.
+	has_obstacles : bool
+		Flag to show the obstacles.
 	"""
 	
-	def __init__(self, dimensions):
+	def __init__(self, dimensions, show_tree_building, has_obstacles):
 		# Colors 
 		self.WHITE = (255, 255, 255)
 		self.BLACK = (0, 0, 0)
@@ -21,24 +25,25 @@ class Environment():
 		self.YELLOW = (255, 255, 0)
 		self.GRAY = (105, 105, 105)
 
+		self.has_obstacles = has_obstacles
+		self.trail_set = []
+		self.trail_sets = []
+		self.obstacles = []
+
 		# Map dimensions
 		self.WIDTH, self.HEIGHT = dimensions 
 
 		# Window settings
 		self.FPS = 120
 		pygame.display.set_caption('Kinodynamic RRT - Car-like Robot')
-		self.map = pygame.display.set_mode(size=(self.WIDTH,
-			self.HEIGHT))
-		self.map.fill(self.WHITE)
 
-		# Trail of the robot position, sets of trails and obstacles 
-		self.trail_set = []
-		self.trail_sets = []
-		self.obstacles = []
+		if show_tree_building:
+			self.show_screen()
+		else:
+			self.hide_screen()
 
-		self.are_obstacles_drawn = False
 
-	def trail(self, position):
+	def trail(self, position, draw_trail):
 		"""Draws the robot trail.
 		
 		Given two immediate different positions of the robots a straight
@@ -49,6 +54,8 @@ class Environment():
 		----------
 		positon : tuple
 			The robots position in X and Y at each time.
+		draw_trail : bool
+			Shows the trail traveled by the robot.
 		
 		Returns
 		-------
@@ -57,8 +64,9 @@ class Environment():
 		for i in range(len(self.trail_set)-1):
 			trail_set_start = self.trail_set[i][0], self.trail_set[i][1]
 			trail_set_end = self.trail_set[i+1][0], self.trail_set[i+1][1]
-			pygame.draw.line(surface=self.map, color=self.BROWN, start_pos=trail_set_start,
-				end_pos=trail_set_end)
+			if draw_trail: 
+				pygame.draw.line(surface=self.map, color=self.BROWN, start_pos=trail_set_start,
+					end_pos=trail_set_end)
 
 		self.trail_set.append(position)
 
@@ -196,4 +204,21 @@ class Environment():
 				pygame.draw.rect(surface=self.map, color=self.GRAY, rect=side)
 				obstacles.append(side)
 
-		return obstacles		
+		return obstacles
+
+	def show_screen(self):
+		"""Shows the screen by setting the display flag to SHOWN."""
+		self.map = pygame.display.set_mode(size=(self.WIDTH, self.HEIGHT), flags=pygame.SHOWN)
+		self.map.fill(self.WHITE)
+
+		if self.has_obstacles:
+			self.draw_obstacles()
+
+	def hide_screen(self):
+		"""Hides the screen by setting the display flag to HIDDEN."""
+		self.map = pygame.display.set_mode(size=(self.WIDTH, self.HEIGHT), flags=pygame.HIDDEN)
+		self.map.fill(self.WHITE)
+
+	def clear_screen(self):
+		""""""
+		self.map.fill(self.WHITE)		
