@@ -8,8 +8,8 @@ import sys
 import os
 
 # Command line arguments
-parser = argparse.ArgumentParser(description='Implements the kinodynamic RRT algorithm for a'  
-	'car-like robot.')
+parser = argparse.ArgumentParser(description='Implements the kinodynamic RRT algorithm for a \
+	car-like robot.')
 parser.add_argument('-o', '--obstacles', type=bool, action=argparse.BooleanOptionalAction,
 	metavar='', required=False, help='Obstacles on the map')
 parser.add_argument('-n', '--nodes', type=int, metavar='', required=False, default=5000,
@@ -17,11 +17,11 @@ parser.add_argument('-n', '--nodes', type=int, metavar='', required=False, defau
 parser.add_argument('-dt', '--delta', type=float, metavar='', required=False, default=0.05,
 	help='Fixed time interval')
 parser.add_argument('-init', '--x_init', nargs='+', type=float, metavar='', required=False,
-	default=(50, 50, 0.17), help='Initial node configuration in X, Y, and theta in pixels and'
-	'radians, respectively')
+	default=(50, 50, 0.17), help='Initial node configuration in X, Y, and theta in pixels and \
+	radians, respectively')
 parser.add_argument('-goal', '--x_goal', nargs='+', type=float, metavar='', required=False,
-	default=(540, 380, -0.17), help='Goal node configuration in X, Y, and theta in pixels and'
-	'radians, respectively')
+	default=(540, 380, -0.17), help='Goal node configuration in X, Y, and theta in pixels and \
+	radians, respectively')
 parser.add_argument('-src', '--show_random_configurations', type=bool,
 	action=argparse.BooleanOptionalAction, metavar='', required=False, 
 	help='Show random configurations on screen')
@@ -33,11 +33,11 @@ parser.add_argument('-bp', '--bias_percentage', type=int, metavar='', required=F
 parser.add_argument('-ptg', '--path_to_goal', type=bool, action=argparse.BooleanOptionalAction, 
 	metavar='', required=False, default=False, help='Draws the milestones from path to goal')
 parser.add_argument('-si', '--show_interpolation', type=bool, action=argparse.BooleanOptionalAction, 
-	metavar='', required=False, default=True, help='Draws the configurations needed to reach the'
-	 	'goal')
+	metavar='', required=False, default=True, help='Draws the configurations needed to reach the \
+	 	goal')
 parser.add_argument('-mr', '--move_robot', type=bool, action=argparse.BooleanOptionalAction, 
 	metavar='', required=False, default=True,
-	help='Shows the movements of the robot from the start to the end')
+	help='Shows the movements of the robot from start to end')
 parser.add_argument('-pb', '--position_boundary', type=int, metavar='', required=False, default=25,
 	help='Allowed position region of the pixels for the robot to reach the goal')
 parser.add_argument('-ob', '--orientation_boundary', type=float, metavar='', required=False,
